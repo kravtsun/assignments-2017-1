@@ -151,7 +151,7 @@ public class DictionaryImplTest {
 
             if (randomizer.nextInt(100) < 20 && !keys.isEmpty()) {
                 String key = keys.get(randomizer.nextInt(keys.size()));
-                if (key != "") {
+                if (!key.isEmpty()) {
                     d.remove(key);
                     keys.remove(key);
                     assertEquals(d.size(), keys.size());
