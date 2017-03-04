@@ -1,33 +1,33 @@
 package ru.spbau.mit;
 
-import java.lang.Exception;
+
 
 public class DictionaryImpl implements Dictionary {
 
     // how many elements at most can be stored in a bucket with one hash
-    final private static int MAX_BUCKET_FILL_SIZE = 4;
-    final private static int INITIAL_BUCKETS_NUMBER = 4;
+    private static final int MAX_BUCKET_FILL_SIZE = 4;
+    private static final int INITIAL_BUCKETS_NUMBER = 4;
 
     private static class Node {
-        final private String trueKey;
+        private final String trueKey;
         private String value;
+
+        Node(String trueKey, String value) {
+            this.trueKey = trueKey;
+            this.value = value;
+        }
 
         public static Node empty() {
             return new Node(null, null);
-        }
-
-        public Node(String trueKey, String value) {
-            this.trueKey = trueKey;
-            this.value = value;
         }
     }
 
     private class Bucket {
         public class BucketOverflowException extends Exception {}
-        final private Node[] values;
+        private final Node[] values;
         private int trueSize;
 
-        public Bucket() {
+        Bucket() {
             values = new Node[MAX_BUCKET_FILL_SIZE];
             for (int i = 0; i < values.length; ++i) {
                 values[i] = Node.empty();

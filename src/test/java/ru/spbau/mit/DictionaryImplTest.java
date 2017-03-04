@@ -9,33 +9,31 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by kravtsun on 04.03.17.
- */
 public class DictionaryImplTest {
-    private final static int NTESTS = 1000;
-    private final static int MAX_STRING_SIZE = 100;
-    private final static int MAX_CHAR = 256;
-    private final static Random randomizer;
-    private final static String random_symbols;
+    private static final int NTESTS = 1000;
+    private static final int MAX_STRING_SIZE = 100;
+    private static final int MAX_CHAR = 256;
+    private static final Random RANDOMIZER;
+    private static final int RANDOMIZER_SEED = 1092423045;
+    private static final String RANDOM_SYMBOLS;
 
     static {
-        randomizer = new Random(1092423045);
+        RANDOMIZER = new Random(RANDOMIZER_SEED);
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < MAX_CHAR; ++i) {
-            sb.append((char)(i));
+            sb.append((char) i);
         }
 
-        random_symbols = sb.toString();
+        RANDOM_SYMBOLS = sb.toString();
     }
 
     private static String randomString() {
-        int size = 1 + randomizer.nextInt(MAX_STRING_SIZE);
+        int size = 1 + RANDOMIZER.nextInt(MAX_STRING_SIZE);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < size; ++i) {
-            int nextCharPosition = randomizer.nextInt(random_symbols.length());
-            char nextSymbol = random_symbols.charAt(nextCharPosition);
+            int nextCharPosition = RANDOMIZER.nextInt(RANDOM_SYMBOLS.length());
+            char nextSymbol = RANDOM_SYMBOLS.charAt(nextCharPosition);
             sb.append(nextSymbol);
         }
         return sb.toString();
@@ -67,7 +65,8 @@ public class DictionaryImplTest {
 
         // section "put".
         for (int i = 0; i < NTESTS; ++i) {
-            String key = randomString(), value = randomString();
+            String key = randomString();
+            String value = randomString();
             if (keys.contains(key)) {
                 int index = keys.indexOf(key);
                 assertEquals(d.put(key, value), values.get(index));
@@ -83,7 +82,7 @@ public class DictionaryImplTest {
 
         // section "contains".
         for (int i = 0; i < NTESTS; ++i) {
-            int index = randomizer.nextInt(keys.size());
+            int index = RANDOMIZER.nextInt(keys.size());
             assertTrue(d.contains(keys.get(index)));
             assertEquals(d.get(keys.get(index)), values.get(index));
         }
@@ -92,7 +91,7 @@ public class DictionaryImplTest {
         boolean[] used = new boolean[keys.size()];
         Arrays.fill(used, false);
         for (int i = 0; i < NTESTS; ++i) {
-            int index = randomizer.nextInt(keys.size());
+            int index = RANDOMIZER.nextInt(keys.size());
             String key = keys.get(index), value = values.get(index);
             if (used[index]) {
                 assertEquals(d.remove(key), null);
@@ -105,6 +104,9 @@ public class DictionaryImplTest {
         }
     }
 
+    private static boolean tossCoin(int truePercentage) {
+        return RANDOMIZER.nextInt(100) < truePercentage;
+    }
     @Test
     public void clear() throws Exception {
         DictionaryImpl d = new DictionaryImpl();
@@ -113,6 +115,7 @@ public class DictionaryImplTest {
         assertEquals(d.size(), 0);
 
         ArrayList<String> keys = new ArrayList<>();
+        final int clearFrequency = 10;
         for (int i = 0; i < NTESTS; ++i) {
             String key = randomString();
             String value = randomString();
@@ -120,7 +123,7 @@ public class DictionaryImplTest {
                 continue;
             }
             d.put(key, value);
-            if (randomizer.nextInt(100) < 10) {
+            if (tossCoin(clearFrequency)) {
                 d.clear();
                 for (String k : keys) {
                     assertTrue(!d.contains(k));
@@ -136,21 +139,25 @@ public class DictionaryImplTest {
         DictionaryImpl d = new DictionaryImpl();
         String emptyValue = null;
         ArrayList<String> keys = new ArrayList<>();
+
+        final int putEmptyFrequency = 25;
+        final int removeEmptyFrequency = 50;
+        final int removeAnyFrequency = 30;
         for (int i = 0; i < NTESTS; ++i) {
-            if (randomizer.nextInt(100) < 25) {
+            if (tossCoin(putEmptyFrequency)) {
                 String newEmptyValue = randomString();
                 assertEquals(d.put("", newEmptyValue), emptyValue);
                 keys.add("");
                 emptyValue = newEmptyValue;
             }
-            if (randomizer.nextInt(2) == 0) {
+            if (tossCoin(removeEmptyFrequency)) {
                 assertEquals(d.remove(""), emptyValue);
                 keys.remove("");
                 emptyValue = null;
             }
 
-            if (randomizer.nextInt(100) < 20 && !keys.isEmpty()) {
-                String key = keys.get(randomizer.nextInt(keys.size()));
+            if (tossCoin(removeAnyFrequency) && !keys.isEmpty()) {
+                String key = keys.get(RANDOMIZER.nextInt(keys.size()));
                 if (!key.isEmpty()) {
                     d.remove(key);
                     keys.remove(key);
