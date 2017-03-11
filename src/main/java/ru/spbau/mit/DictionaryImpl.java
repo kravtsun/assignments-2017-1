@@ -20,21 +20,6 @@ public class DictionaryImpl implements Dictionary {
         size = 0;
     }
 
-    private static int bucketIndex(String key, int bucketsNumber) {
-        int initialHash = key.hashCode();
-        final int bitsInInteger = 32;
-        final int minIntegerAbs = 1 << (bitsInInteger - 1);
-        if (initialHash < 0) {
-            initialHash += minIntegerAbs;
-        }
-
-        return initialHash % bucketsNumber;
-    }
-
-    private int hashCodeBucketIndex(String key) {
-        return bucketIndex(key, buckets.length);
-    }
-
     public int size() {
         return size;
     }
@@ -45,12 +30,12 @@ public class DictionaryImpl implements Dictionary {
     }
 
     public String get(String key) {
-        int hashIndex = hashCodeBucketIndex(key);
+        int hashIndex = bucketIndex(key);
         return buckets[hashIndex].get(key);
     }
 
     public String put(String key, String value) {
-        int hashIndex = hashCodeBucketIndex(key);
+        int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
 
         if (bucket.canPut(key)) {
@@ -66,7 +51,7 @@ public class DictionaryImpl implements Dictionary {
     }
 
     public String remove(String key) {
-        int hashIndex = hashCodeBucketIndex(key);
+        int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
         String oldValue = bucket.remove(key);
         if (oldValue != null) {
@@ -79,6 +64,22 @@ public class DictionaryImpl implements Dictionary {
         size = 0;
         buckets = emptyBuckets(buckets.length);
     }
+
+    private static int bucketIndex(String key, int bucketsNumber) {
+        int initialHash = key.hashCode();
+        final int bitsInInteger = 32;
+        final int minIntegerAbs = 1 << (bitsInInteger - 1);
+        if (initialHash < 0) {
+            initialHash += minIntegerAbs;
+        }
+
+        return initialHash % bucketsNumber;
+    }
+
+    private int bucketIndex(String key) {
+        return bucketIndex(key, buckets.length);
+    }
+
 
     private Bucket[] emptyBuckets(int newBucketsNumber) {
         Bucket[] newBuckets = new Bucket[newBucketsNumber];
@@ -196,7 +197,7 @@ public class DictionaryImpl implements Dictionary {
                     }
                 }
 
-                values[size-1] = null;
+                values[size - 1] = null;
                 return oldValue;
             }
         }
