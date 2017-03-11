@@ -22,9 +22,10 @@ public class DictionaryImpl implements Dictionary {
 
     private static int bucketIndex(String key, int bucketsNumber) {
         int initialHash = key.hashCode();
-        final int MIN_INTEGER_ABS = 1 << 31;
+        final int bitsInInteger = 32;
+        final int minIntegerAbs = 1 << (bitsInInteger);
         if (initialHash < 0) {
-            initialHash += MIN_INTEGER_ABS;
+            initialHash += minIntegerAbs;
         }
 
         return initialHash % bucketsNumber;

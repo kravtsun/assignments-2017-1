@@ -107,8 +107,8 @@ public class DictionaryImplTest {
     }
 
     private static boolean tossCoin(int truePercentage) {
-        final int FULL_PERCENTAGE = 100;
-        return RANDOMIZER.nextInt(FULL_PERCENTAGE) < truePercentage;
+        final int fullPercentage = 100;
+        return RANDOMIZER.nextInt(fullPercentage) < truePercentage;
     }
     @Test
     public void clear() throws Exception {
