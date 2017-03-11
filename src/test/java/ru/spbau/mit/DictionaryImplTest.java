@@ -93,7 +93,8 @@ public class DictionaryImplTest {
         Arrays.fill(used, false);
         for (int i = 0; i < NTESTS; ++i) {
             int index = RANDOMIZER.nextInt(keys.size());
-            String key = keys.get(index), value = values.get(index);
+            String key = keys.get(index);
+            String value = values.get(index);
             if (used[index]) {
                 assertNull(d.remove(key), null);
             } else {
@@ -106,7 +107,8 @@ public class DictionaryImplTest {
     }
 
     private static boolean tossCoin(int truePercentage) {
-        return RANDOMIZER.nextInt(100) < truePercentage;
+        final int FULL_PERCENTAGE = 100;
+        return RANDOMIZER.nextInt(FULL_PERCENTAGE) < truePercentage;
     }
     @Test
     public void clear() throws Exception {
