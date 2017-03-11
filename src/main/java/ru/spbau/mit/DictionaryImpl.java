@@ -51,14 +51,33 @@ public class DictionaryImpl implements Dictionary {
 
     public String put(String key, String value) {
         int hashIndex = hashCodeBucketIndex(key);
-        Bucket bucket = buckets[hashIndex]; // reference or copied value?
+        Bucket bucket = buckets[hashIndex];
 
         try {
-            return bucket.put(key, value);
+            String oldValue = bucket.put(key, value);
+            if (oldValue == null) {
+                size++;
+            }
+            return oldValue;
         } catch (Bucket.BucketOverflowException e) {
             resize();
             return put(key, value);
         }
+    }
+
+    public String remove(String key) {
+        int hashIndex = hashCodeBucketIndex(key);
+        Bucket bucket = buckets[hashIndex];
+        String oldValue = bucket.remove(key);
+        if (oldValue != null) {
+            size--;
+        }
+        return oldValue;
+    }
+
+    public void clear() {
+        size = 0;
+        buckets = emptyBuckets(buckets.length);
     }
 
     private Bucket[] emptyBuckets(int newBucketsNumber) {
@@ -71,7 +90,6 @@ public class DictionaryImpl implements Dictionary {
 
     private Bucket[] newBuckets(int newBucketsNumber) {
         Bucket[] newBuckets = emptyBuckets(newBucketsNumber);
-        size = 0;
         for (Bucket bucket : buckets) {
             for (int i = 0; i < bucket.size(); ++i) {
                 int newBucketIndex = bucketIndex(bucket.values[i].key, newBucketsNumber);
@@ -96,17 +114,6 @@ public class DictionaryImpl implements Dictionary {
         }
     }
 
-    public String remove(String key) {
-        int hashIndex = hashCodeBucketIndex(key);
-        Bucket bucket = buckets[hashIndex];
-        return bucket.remove(key);
-    }
-
-    public void clear() {
-        size = 0;
-        buckets = emptyBuckets(buckets.length);
-    }
-
     private static class Node {
         private final String key;
         private String value;
@@ -117,7 +124,7 @@ public class DictionaryImpl implements Dictionary {
         }
     }
 
-    private class Bucket {
+    private static class Bucket {
         public class BucketOverflowException extends Exception {}
         private final Node[] values;
 
@@ -176,7 +183,6 @@ public class DictionaryImpl implements Dictionary {
             }
 
             values[size()] = node;
-            size++;
         }
 
         public String remove(String key) {
