@@ -141,17 +141,7 @@ public class DictionaryImpl implements Dictionary {
             }
         }
 
-        private int index(String key) {
-            int size = size();
-            for (int i = 0; i < size; i++) {
-                if (values[i].key.equals(key)) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        int size() {
+        public int size() {
             for (int i = 0; i < MAX_BUCKET_FILL_SIZE; ++i) {
                 if (values[i] == null) {
                     return i;
@@ -200,6 +190,16 @@ public class DictionaryImpl implements Dictionary {
                 values[size - 1] = null;
                 return oldValue;
             }
+        }
+
+        private int index(String key) {
+            int size = size();
+            for (int i = 0; i < size; i++) {
+                if (values[i].key.equals(key)) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         private boolean isFull() {
