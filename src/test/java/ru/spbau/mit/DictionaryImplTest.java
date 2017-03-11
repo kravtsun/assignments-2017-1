@@ -110,6 +110,7 @@ public class DictionaryImplTest {
         final int fullPercentage = 100;
         return RANDOMIZER.nextInt(fullPercentage) < truePercentage;
     }
+
     @Test
     public void clear() throws Exception {
         DictionaryImpl d = new DictionaryImpl();

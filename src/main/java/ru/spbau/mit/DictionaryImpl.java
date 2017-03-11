@@ -23,7 +23,7 @@ public class DictionaryImpl implements Dictionary {
     private static int bucketIndex(String key, int bucketsNumber) {
         int initialHash = key.hashCode();
         final int bitsInInteger = 32;
-        final int minIntegerAbs = 1 << (bitsInInteger);
+        final int minIntegerAbs = 1 << (bitsInInteger - 1);
         if (initialHash < 0) {
             initialHash += minIntegerAbs;
         }
@@ -61,12 +61,16 @@ public class DictionaryImpl implements Dictionary {
         }
     }
 
-    private Bucket[] newBuckets(int newBucketsNumber) {
+    private Bucket[] emptyBuckets(int newBucketsNumber) {
         Bucket[] newBuckets = new Bucket[newBucketsNumber];
         for (int i = 0; i < newBucketsNumber; ++i) {
             newBuckets[i] = new Bucket();
         }
+        return newBuckets;
+    }
 
+    private Bucket[] newBuckets(int newBucketsNumber) {
+        Bucket[] newBuckets = emptyBuckets(newBucketsNumber);
         size = 0;
         for (Bucket bucket : buckets) {
             for (int i = 0; i < bucket.trueSize; i++) {
@@ -100,7 +104,7 @@ public class DictionaryImpl implements Dictionary {
 
     public void clear() {
         size = 0;
-        buckets = newBuckets(buckets.length);
+        buckets = emptyBuckets(buckets.length);
     }
 
     private static class Node {
