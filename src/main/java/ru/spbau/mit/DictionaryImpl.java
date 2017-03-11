@@ -115,6 +115,10 @@ public class DictionaryImpl implements Dictionary {
             this.trueKey = trueKey;
             this.value = value;
         }
+
+        public static Node empty() {
+            return new Node(null, null);
+        }
     }
 
     private class Bucket {
@@ -124,6 +128,9 @@ public class DictionaryImpl implements Dictionary {
 
         Bucket() {
             values = new Node[MAX_BUCKET_FILL_SIZE];
+            for (int i = 0; i < values.length; ++i) {
+                values[i] = Node.empty();
+            }
             trueSize = 0;
         }
 
@@ -186,7 +193,7 @@ public class DictionaryImpl implements Dictionary {
                 }
                 size--;
                 trueSize--;
-                values[trueSize] = null;
+                values[trueSize] = Node.empty();
                 return oldValue;
             }
         }

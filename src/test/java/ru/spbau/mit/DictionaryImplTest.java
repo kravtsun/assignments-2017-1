@@ -9,10 +9,11 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 
 public class DictionaryImplTest {
-    private static final int NTESTS = 1000;
-    private static final int MAX_STRING_SIZE = 100;
+    private static final int NTESTS = 10000;
+    private static final int MAX_STRING_SIZE = 1000;
     private static final int MAX_CHAR = 256;
     private static final Random RANDOMIZER;
     private static final int RANDOMIZER_SEED = 1092423045;
@@ -119,18 +120,27 @@ public class DictionaryImplTest {
         assertEquals(d.size(), 0);
 
         ArrayList<String> keys = new ArrayList<>();
-        final int clearFrequency = 10;
+        final int clearFrequency = 3;
         for (int i = 0; i < NTESTS; ++i) {
             String key = randomString();
             String value = randomString();
             if (keys.contains(key)) {
                 continue;
             }
+            assertEquals(keys.contains(key), d.contains(key));
             d.put(key, value);
+            if (!keys.contains(key)) {
+                keys.add(key);
+            }
             if (tossCoin(clearFrequency)) {
-                d.clear();
+                assertEquals(d.size(), keys.size());
                 for (String k : keys) {
-                    assertTrue(!d.contains(k));
+                    assertTrue(d.contains(k));
+                }
+                d.clear();
+                assertEquals(d.size(), 0);
+                for (String k : keys) {
+                    assertFalse(d.contains(k));
                 }
                 keys.clear();
             }
