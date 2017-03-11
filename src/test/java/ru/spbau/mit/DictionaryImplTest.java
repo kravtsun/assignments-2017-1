@@ -8,6 +8,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 public class DictionaryImplTest {
     private static final int NTESTS = 1000;
@@ -45,16 +46,16 @@ public class DictionaryImplTest {
         int size = 0;
         ArrayList<String> keys = new ArrayList<>();
         for (int i = 0; i < NTESTS; i++) {
-            assertTrue(d.size() == size);
+            assertEquals(d.size(), size);
             String key = randomString();
             if (!keys.contains(key)) {
                 keys.add(key);
                 size++;
                 d.put(key, randomString());
-                assertTrue(d.size() == size);
+                assertEquals(d.size(), size);
             }
         }
-        assertTrue(d.size() == size);
+        assertEquals(d.size(), size);
     }
 
     @Test
@@ -74,7 +75,7 @@ public class DictionaryImplTest {
             } else {
                 keys.add(key);
                 values.add(value);
-                assertEquals(d.put(key, value), null);
+                assertNull(d.put(key, value), null);
             }
             assertTrue(d.contains(key));
             assertEquals(value, d.get(key));
@@ -94,11 +95,11 @@ public class DictionaryImplTest {
             int index = RANDOMIZER.nextInt(keys.size());
             String key = keys.get(index), value = values.get(index);
             if (used[index]) {
-                assertEquals(d.remove(key), null);
+                assertNull(d.remove(key), null);
             } else {
                 assertEquals(d.remove(key), value);
-                assertEquals(d.remove(key), null);
-                assertEquals(d.remove(key), null);
+                assertNull(d.remove(key), null);
+                assertNull(d.remove(key), null);
                 used[index] = true;
             }
         }

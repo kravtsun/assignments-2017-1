@@ -8,99 +8,8 @@ public class DictionaryImpl implements Dictionary {
     private static final int MAX_BUCKET_FILL_SIZE = 4;
     private static final int INITIAL_BUCKETS_NUMBER = 4;
 
-    private static class Node {
-        private final String trueKey;
-        private String value;
-
-        Node(String trueKey, String value) {
-            this.trueKey = trueKey;
-            this.value = value;
-        }
-
-        public static Node empty() {
-            return new Node(null, null);
-        }
-    }
-
-    private class Bucket {
-        public class BucketOverflowException extends Exception {}
-        private final Node[] values;
-        private int trueSize;
-
-        Bucket() {
-            values = new Node[MAX_BUCKET_FILL_SIZE];
-            for (int i = 0; i < values.length; ++i) {
-                values[i] = Node.empty();
-            }
-            trueSize = 0;
-        }
-
-        public int index(String key) {
-            for (int i = 0; i < trueSize; i++) {
-//                if (values[i].trueKey == null) break;
-                if (values[i].trueKey.equals(key)) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        public String get(String key) {
-            int i = index(key);
-            if (i == -1) {
-                return null;
-            } else {
-                return values[i].value;
-            }
-        }
-
-        public boolean isFull() {
-            return trueSize == MAX_BUCKET_FILL_SIZE;
-        }
-
-        public String put(String key, String value) throws BucketOverflowException {
-            int i = index(key);
-            if (i != -1) {
-                String oldValue = values[i].value;
-                values[i].value = value;
-                return oldValue;
-            }
-
-            add(new Node(key, value));
-
-            return null;
-        }
-
-        public void add(Node node) throws BucketOverflowException {
-            if (isFull()) {
-                throw new BucketOverflowException();
-            }
-            values[trueSize++] = node;
-            fullSize++;
-        }
-
-        public String remove(String key) {
-            String oldValue = get(key);
-
-            if (oldValue == null) {
-                return null;
-            } else {
-                int j = 0;
-                for (int i = 0; i < trueSize; ++i) {
-                    if (values[i].trueKey.equals(key)) continue;
-                    values[j] = values[i]; // copy???
-                    j++;
-                }
-                fullSize--;
-                trueSize--;
-                values[trueSize] = Node.empty();
-                return oldValue;
-            }
-        }
-    }
-
     private Bucket[] buckets;
-    private int fullSize;
+    private int size;
 
     public DictionaryImpl() {
         buckets = new Bucket[INITIAL_BUCKETS_NUMBER];
@@ -108,10 +17,10 @@ public class DictionaryImpl implements Dictionary {
             buckets[i] = new Bucket();
         }
 
-        fullSize = 0;
+        size = 0;
     }
 
-    private int bucketIndex(String key, int bucketsNumber) {
+    private static int bucketIndex(String key, int bucketsNumber) {
         int initialHash = key.hashCode();
         if (initialHash < 0) {
             initialHash += 1 << 31;
@@ -119,12 +28,13 @@ public class DictionaryImpl implements Dictionary {
 
         return initialHash % bucketsNumber;
     }
+
     private int hashCodeBucketIndex(String key) {
         return bucketIndex(key, buckets.length);
     }
 
     public int size() {
-        return fullSize;
+        return size;
     }
 
     public boolean contains(String key) {
@@ -138,20 +48,15 @@ public class DictionaryImpl implements Dictionary {
     }
 
     public String put(String key, String value) {
-//        String gotValue = get(key);
         int hashIndex = hashCodeBucketIndex(key);
         Bucket bucket = buckets[hashIndex]; // reference or copied value?
 
         try {
-            String oldValue = bucket.put(key, value);
-            if (oldValue != null) {
-                return oldValue;
-            }
+            return bucket.put(key, value);
         } catch (Bucket.BucketOverflowException e) {
             resize();
             return put(key, value);
         }
-        return null;
     }
 
     private Bucket[] newBuckets(int newBucketsNumber) {
@@ -160,7 +65,7 @@ public class DictionaryImpl implements Dictionary {
             newBuckets[i] = new Bucket();
         }
 
-        fullSize = 0;
+        size = 0;
         for (Bucket bucket : buckets) {
             for (int i = 0; i < bucket.trueSize; i++) {
                 int newBucketIndex = bucketIndex(bucket.values[i].trueKey, newBucketsNumber);
@@ -192,6 +97,90 @@ public class DictionaryImpl implements Dictionary {
     }
 
     public void clear() {
-        fullSize = 0;
+        size = 0;
+        buckets = newBuckets(buckets.length);
+    }
+
+    private static class Node {
+        private final String trueKey;
+        private String value;
+
+        Node(String trueKey, String value) {
+            this.trueKey = trueKey;
+            this.value = value;
+        }
+    }
+
+    private class Bucket {
+        public class BucketOverflowException extends Exception {}
+        private final Node[] values;
+        private int trueSize;
+
+        Bucket() {
+            values = new Node[MAX_BUCKET_FILL_SIZE];
+            trueSize = 0;
+        }
+
+        private int index(String key) {
+            for (int i = 0; i < trueSize; i++) {
+                if (values[i].trueKey.equals(key)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public String get(String key) {
+            int i = index(key);
+            if (i == -1) {
+                return null;
+            } else {
+                return values[i].value;
+            }
+        }
+
+        private boolean isFull() {
+            return trueSize == MAX_BUCKET_FILL_SIZE;
+        }
+
+        public String put(String key, String value) throws BucketOverflowException {
+            int i = index(key);
+            if (i != -1) {
+                String oldValue = values[i].value;
+                values[i].value = value;
+                return oldValue;
+            }
+
+            add(new Node(key, value));
+
+            return null;
+        }
+
+        public void add(Node node) throws BucketOverflowException {
+            if (isFull()) {
+                throw new BucketOverflowException();
+            }
+            values[trueSize++] = node;
+            size++;
+        }
+
+        public String remove(String key) {
+            String oldValue = get(key);
+
+            if (oldValue == null) {
+                return null;
+            } else {
+                int j = 0;
+                for (int i = 0; i < trueSize; ++i) {
+                    if (values[i].trueKey.equals(key)) continue;
+                    values[j] = values[i]; // copy???
+                    j++;
+                }
+                size--;
+                trueSize--;
+                values[trueSize] = null;
+                return oldValue;
+            }
+        }
     }
 }
