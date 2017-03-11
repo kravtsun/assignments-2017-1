@@ -73,8 +73,8 @@ public class DictionaryImpl implements Dictionary {
         Bucket[] newBuckets = emptyBuckets(newBucketsNumber);
         size = 0;
         for (Bucket bucket : buckets) {
-            for (int i = 0; i < bucket.trueSize; i++) {
-                int newBucketIndex = bucketIndex(bucket.values[i].trueKey, newBucketsNumber);
+            for (int i = 0; i < bucket.size(); ++i) {
+                int newBucketIndex = bucketIndex(bucket.values[i].key, newBucketsNumber);
                 Bucket newBucket = newBuckets[newBucketIndex];
                 try {
                     newBucket.add(bucket.values[i]);
@@ -108,35 +108,27 @@ public class DictionaryImpl implements Dictionary {
     }
 
     private static class Node {
-        private final String trueKey;
+        private final String key;
         private String value;
 
-        Node(String trueKey, String value) {
-            this.trueKey = trueKey;
+        Node(String key, String value) {
+            this.key = key;
             this.value = value;
-        }
-
-        public static Node empty() {
-            return new Node(null, null);
         }
     }
 
     private class Bucket {
         public class BucketOverflowException extends Exception {}
         private final Node[] values;
-        private int trueSize;
 
         Bucket() {
             values = new Node[MAX_BUCKET_FILL_SIZE];
-            for (int i = 0; i < values.length; ++i) {
-                values[i] = Node.empty();
-            }
-            trueSize = 0;
         }
 
         private int index(String key) {
-            for (int i = 0; i < trueSize; i++) {
-                if (values[i].trueKey.equals(key)) {
+            int size = size();
+            for (int i = 0; i < size; i++) {
+                if (values[i].key.equals(key)) {
                     return i;
                 }
             }
@@ -152,8 +144,17 @@ public class DictionaryImpl implements Dictionary {
             }
         }
 
+        int size() {
+            for (int i = 0; i < MAX_BUCKET_FILL_SIZE; ++i) {
+                if (values[i] == null) {
+                    return i;
+                }
+            }
+            return MAX_BUCKET_FILL_SIZE;
+        }
+
         private boolean isFull() {
-            return trueSize == MAX_BUCKET_FILL_SIZE;
+            return size() == MAX_BUCKET_FILL_SIZE;
         }
 
         public String put(String key, String value) throws BucketOverflowException {
@@ -173,7 +174,8 @@ public class DictionaryImpl implements Dictionary {
             if (isFull()) {
                 throw new BucketOverflowException();
             }
-            values[trueSize++] = node;
+
+            values[size()] = node;
             size++;
         }
 
@@ -184,16 +186,15 @@ public class DictionaryImpl implements Dictionary {
                 return null;
             } else {
                 int j = 0;
-                for (int i = 0; i < trueSize; ++i) {
-                    if (values[i].trueKey.equals(key)) {
-                        continue;
+                int size = size();
+
+                for (int i = 0; i < size; ++i) {
+                    if (!values[i].key.equals(key)) {
+                        values[j++] = values[i];
                     }
-                    values[j] = values[i]; // copy???
-                    j++;
                 }
-                size--;
-                trueSize--;
-                values[trueSize] = Node.empty();
+
+                values[size-1] = null;
                 return oldValue;
             }
         }
