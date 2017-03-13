@@ -1,6 +1,6 @@
 package ru.spbau.mit;
 
-
+import org.jetbrains.annotations.Contract;
 
 public class DictionaryImpl implements Dictionary {
 
@@ -20,16 +20,19 @@ public class DictionaryImpl implements Dictionary {
         return size;
     }
 
+    @Contract("null -> false")
     public boolean contains(String key) {
         String value = get(key);
         return value != null;
     }
 
+    @Contract("null -> null")
     public String get(String key) {
         int hashIndex = bucketIndex(key);
         return buckets[hashIndex].get(key);
     }
 
+    @Contract("null, _ -> null")
     public String put(String key, String value) {
         int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
@@ -46,6 +49,7 @@ public class DictionaryImpl implements Dictionary {
         }
     }
 
+    @Contract("null -> null")
     public String remove(String key) {
         int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
@@ -61,6 +65,7 @@ public class DictionaryImpl implements Dictionary {
         buckets = emptyBuckets(buckets.length);
     }
 
+    @Contract("null -> fail")
     private static int bucketIndex(String key, int bucketsNumber) {
         int initialHash = key.hashCode();
         final int bitsInInteger = 32;
@@ -101,13 +106,11 @@ public class DictionaryImpl implements Dictionary {
     }
 
     private void resize() {
-        for (int newBucketsNumber = buckets.length * 2;; newBucketsNumber *= 2) {
-            Bucket[] newBs = newBuckets(newBucketsNumber);
-            if (newBs != null) {
-                buckets = newBs;
-                return;
-            }
+        Bucket[] newBs = null;
+        for (int newBucketsNumber = buckets.length * 2; newBs == null; newBucketsNumber *= 2) {
+            newBs = newBuckets(newBucketsNumber);
         }
+        buckets = newBs;
     }
 
     private static class Node {
@@ -151,6 +154,7 @@ public class DictionaryImpl implements Dictionary {
 
         public String put(String key, String value) {
             int i = index(key);
+            assert (canPut(key));
             if (i != -1) {
                 String oldValue = values[i].value;
                 values[i].value = value;
