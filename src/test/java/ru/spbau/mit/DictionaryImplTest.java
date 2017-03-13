@@ -8,8 +8,9 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 
 public class DictionaryImplTest {
     private static final int NTESTS = 10000;
@@ -181,4 +182,49 @@ public class DictionaryImplTest {
         }
     }
 
+    @Test
+    public void remove() {
+        DictionaryImpl d = new DictionaryImpl();
+        ArrayList<String> keys = new ArrayList<>();
+        for (int i = 0; i < NTESTS; ++i) {
+            String key = randomString();
+            String value = randomString();
+            assertEquals(d.contains(key), keys.contains(key));
+            if (!keys.contains(key)) {
+                d.put(key, value);
+                assertTrue(d.contains(key));
+                d.remove(key);
+                assertFalse(d.contains(key));
+            }
+        }
+
+        for (int i = 0; i < NTESTS; ++i) {
+            String key = randomString();
+            String value = randomString();
+            if (keys.contains(key)) {
+                continue;
+            }
+            d.put(key, value);
+            keys.add(key);
+        }
+
+        assertEquals(keys.size(), d.size());
+        for (String key : keys) {
+            assertTrue(d.contains(key));
+            d.remove(key);
+            assertNull(d.get(key));
+            assertFalse(d.contains(key));
+            d.put(key, randomString());
+            assertTrue(d.contains(key));
+            assertNotNull(d.get(key));
+        }
+
+        assertEquals(keys.size(), d.size());
+        for (String key : keys) {
+            assertTrue(d.contains(key));
+            d.remove(key);
+            assertNull(d.get(key));
+        }
+        assertEquals(d.size(), 0);
+    }
 }

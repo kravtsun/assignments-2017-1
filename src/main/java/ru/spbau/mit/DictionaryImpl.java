@@ -12,11 +12,7 @@ public class DictionaryImpl implements Dictionary {
     private int size;
 
     public DictionaryImpl() {
-        buckets = new Bucket[INITIAL_BUCKETS_NUMBER];
-        for (int i = 0; i < buckets.length; i++) {
-            buckets[i] = new Bucket();
-        }
-
+        buckets = emptyBuckets(INITIAL_BUCKETS_NUMBER);
         size = 0;
     }
 
@@ -79,7 +75,6 @@ public class DictionaryImpl implements Dictionary {
     private int bucketIndex(String key) {
         return bucketIndex(key, buckets.length);
     }
-
 
     private Bucket[] emptyBuckets(int newBucketsNumber) {
         Bucket[] newBuckets = new Bucket[newBucketsNumber];
@@ -150,7 +145,6 @@ public class DictionaryImpl implements Dictionary {
             return MAX_BUCKET_FILL_SIZE;
         }
 
-
         public boolean canPut(String key) {
             return index(key) != -1 || !isFull();
         }
@@ -164,7 +158,6 @@ public class DictionaryImpl implements Dictionary {
             }
 
             add(new Node(key, value));
-
             return null;
         }
 
@@ -175,21 +168,14 @@ public class DictionaryImpl implements Dictionary {
         public String remove(String key) {
             String oldValue = get(key);
 
-            if (oldValue == null) {
-                return null;
-            } else {
-                int j = 0;
+            if (oldValue != null) {
                 int size = size();
-
-                for (int i = 0; i < size; ++i) {
-                    if (!values[i].key.equals(key)) {
-                        values[j++] = values[i];
-                    }
-                }
-
+                int i = index(key);
+                values[i] = values[size - 1];
                 values[size - 1] = null;
-                return oldValue;
+                assert(size() == size - 1);
             }
+            return oldValue;
         }
 
         private int index(String key) {
