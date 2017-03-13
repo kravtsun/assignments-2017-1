@@ -173,7 +173,7 @@ public class DictionaryImpl implements Dictionary {
                 int i = index(key);
                 values[i] = values[size - 1];
                 values[size - 1] = null;
-                assert(size() == size - 1);
+                assert (size() == size - 1);
             }
             return oldValue;
         }
