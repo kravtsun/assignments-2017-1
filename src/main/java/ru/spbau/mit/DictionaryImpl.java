@@ -1,7 +1,5 @@
 package ru.spbau.mit;
 
-import org.jetbrains.annotations.Contract;
-
 public class DictionaryImpl implements Dictionary {
 
     // how many elements at most can be stored in a bucket with one hash
@@ -20,20 +18,26 @@ public class DictionaryImpl implements Dictionary {
         return size;
     }
 
-    @Contract("null -> false")
     public boolean contains(String key) {
+        if (key == null) {
+            return false;
+        }
         String value = get(key);
         return value != null;
     }
 
-    @Contract("null -> null")
     public String get(String key) {
+        if (key == null) {
+            return null;
+        }
         int hashIndex = bucketIndex(key);
         return buckets[hashIndex].get(key);
     }
 
-    @Contract("null, _ -> null")
     public String put(String key, String value) {
+        if (key == null) {
+            return null;
+        }
         int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
 
@@ -49,8 +53,10 @@ public class DictionaryImpl implements Dictionary {
         }
     }
 
-    @Contract("null -> null")
     public String remove(String key) {
+        if (key == null) {
+            return null;
+        }
         int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
         String oldValue = bucket.remove(key);
@@ -65,7 +71,6 @@ public class DictionaryImpl implements Dictionary {
         buckets = emptyBuckets(buckets.length);
     }
 
-    @Contract("null -> fail")
     private static int bucketIndex(String key, int bucketsNumber) {
         int initialHash = key.hashCode();
         final int bitsInInteger = 32;
