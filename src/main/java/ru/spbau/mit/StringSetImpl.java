@@ -7,31 +7,6 @@ public class StringSetImpl implements StringSet {
         root = null;
     }
 
-    private Vertex traverseWord(String element, boolean addIfNotExists) {
-        if (root == null) {
-            if (addIfNotExists) {
-                root = new Vertex(null); // root only.
-            } else {
-                return null;
-            }
-        }
-
-        Vertex current = root;
-
-        for (int i = 0; i < element.length(); ++i) {
-            char c = element.charAt(i);
-            if (current.next[c] == null) {
-                if (addIfNotExists) {
-                    current.next[c] = new Vertex(current);
-                } else {
-                    return null;
-                }
-            }
-            current = current.next[c];
-        }
-        return current;
-    }
-
     public boolean add(String element) {
         Vertex current = traverseWord(element, true);
         if (current.isTerminal) {
@@ -49,13 +24,6 @@ public class StringSetImpl implements StringSet {
     public boolean contains(String element) {
         Vertex current = traverseWord(element, false);
         return current != null && current.isTerminal;
-    }
-
-    private void removeOnEmpty(Vertex current, char stepChar) {
-        current.subTreeSize--;
-        if (current.subTreeSize == 0 && current.parent != null) {
-            current.parent.next[stepChar] = null;
-        }
     }
 
     public boolean remove(String element) {
@@ -86,6 +54,38 @@ public class StringSetImpl implements StringSet {
     public int howManyStartsWithPrefix(String prefix) {
         Vertex current = traverseWord(prefix, false);
         return current == null ? 0 : current.subTreeSize;
+    }
+
+    private Vertex traverseWord(String element, boolean addIfNotExists) {
+        if (root == null) {
+            if (addIfNotExists) {
+                root = new Vertex(null); // root only.
+            } else {
+                return null;
+            }
+        }
+
+        Vertex current = root;
+
+        for (int i = 0; i < element.length(); ++i) {
+            char c = element.charAt(i);
+            if (current.next[c] == null) {
+                if (addIfNotExists) {
+                    current.next[c] = new Vertex(current);
+                } else {
+                    return null;
+                }
+            }
+            current = current.next[c];
+        }
+        return current;
+    }
+
+    private void removeOnEmpty(Vertex current, char stepChar) {
+        current.subTreeSize--;
+        if (current.subTreeSize == 0 && current.parent != null) {
+            current.parent.next[stepChar] = null;
+        }
     }
 
     private class Vertex {
