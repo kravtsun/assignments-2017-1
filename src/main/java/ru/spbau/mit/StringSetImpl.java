@@ -1,6 +1,12 @@
 package ru.spbau.mit;
 
-public class StringSetImpl implements StringSet {
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class StringSetImpl implements StringSet, StreamSerializable {
+    private static final int BYTES_IN_INT = 4;
+    private static final int BITS_IN_BYTE = 8;
     private Vertex root;
 
     public StringSetImpl() {
@@ -56,6 +62,14 @@ public class StringSetImpl implements StringSet {
         return current == null ? 0 : current.subTreeSize;
     }
 
+    public void serialize(OutputStream out) throws SerializationException {
+        Vertex.serializeVertex(root, out);
+    }
+
+    public void deserialize(InputStream in) throws SerializationException {
+        root = Vertex.deserializeVertex(in, null);
+    }
+
     private Vertex traverseWord(String element, boolean addIfNotExists) {
         if (root == null) {
             if (addIfNotExists) {
@@ -90,18 +104,95 @@ public class StringSetImpl implements StringSet {
         }
     }
 
-    private static class Vertex {
+    private static void booleanSerialize(boolean b, OutputStream out) throws SerializationException {
+        try {
+            if (b) {
+                out.write(1);
+            } else {
+                out.write(0);
+            }
+        }
+        catch (IOException e) {
+            throw new SerializationException();
+        }
+    }
+
+    private static void intSerialize(int num, OutputStream out) throws SerializationException {
+        try {
+            for (int i = 0; i < BYTES_IN_INT; ++i) {
+                out.write(num & 0xFF);
+                num >>= BITS_IN_BYTE;
+            }
+        }
+        catch (IOException e) {
+            throw new SerializationException();
+        }
+    }
+
+    private static boolean booleanDeserialize(InputStream in) throws SerializationException {
+        try {
+            int i = in.read();
+            if (i != 1 && i != 0) {
+                throw new SerializationException();
+            }
+            return i == 1;
+        }
+        catch (IOException e) {
+            throw new SerializationException();
+        }
+    }
+
+    private static int intDeserialize(InputStream in) throws SerializationException {
+        try {
+            int num = 0;
+            for (int i = 0; i < BYTES_IN_INT; ++i) {
+                final int readNum = in.read();
+                num |= readNum << (i * BITS_IN_BYTE);
+            }
+            return num;
+        }
+        catch (IOException e) {
+            throw new SerializationException();
+        }
+    }
+
+    private static class Vertex implements StreamSerializable {
         private static final int CHAR_POWER = 2 * 26;
         private final Vertex[] next;
         private boolean isTerminal;
-        private final Vertex parent;
+        private Vertex parent;
         private int subTreeSize;
 
-        Vertex(Vertex parent) {
+        private static final int VERTEX_MAGIC = 0x0ABBCCDD;
+        private static final int EMPTY_VERTEX_MAGIC = 0x0DCCBBAA;
+
+        public Vertex(Vertex parent) {
             isTerminal = false;
             next = new Vertex[CHAR_POWER];
             this.parent = parent;
             subTreeSize = 0;
+        }
+
+        public static void serializeVertex(Vertex v, OutputStream out) throws SerializationException {
+            if (v == null) {
+                intSerialize(EMPTY_VERTEX_MAGIC, out);
+            } else {
+                v.serialize(out);
+            }
+        }
+
+        // Question: constructor would be better?
+        public static Vertex deserializeVertex(InputStream in, Vertex parent) throws SerializationException {
+            final int magic = intDeserialize(in);
+            if (magic == EMPTY_VERTEX_MAGIC) {
+                return null;
+            } else if (magic == VERTEX_MAGIC) {
+                Vertex v = new Vertex(parent);
+                v.deserialize(in);
+                return v;
+            } else {
+                throw new SerializationException();
+            }
         }
 
         public static int stepCharIndex(char stepChar) {
@@ -110,6 +201,33 @@ public class StringSetImpl implements StringSet {
             } else {
                 return (CHAR_POWER / 2) + (int) (stepChar - 'A');
             }
+	    }
+
+        public void serialize(OutputStream out) throws SerializationException {
+            intSerialize(VERTEX_MAGIC, out);
+            for (int i = 0; i < next.length; ++i) {
+                if (next[i] == null) {
+                    intSerialize(EMPTY_VERTEX_MAGIC, out);
+                } else {
+                    next[i].serialize(out);
+                }
+            }
+            booleanSerialize(isTerminal, out);
+            intSerialize(subTreeSize, out);
+        }
+
+        public void deserialize(InputStream in) throws SerializationException {
+//            final int magic = intDeserialize(in);
+//            if (magic != VERTEX_MAGIC) {
+//                throw new SerializationException();
+//            }
+
+            for (int i = 0; i < next.length; ++i) {
+                next[i] = deserializeVertex(in, this);
+            }
+
+            isTerminal = booleanDeserialize(in);
+            subTreeSize = intDeserialize(in);
         }
     }
 }

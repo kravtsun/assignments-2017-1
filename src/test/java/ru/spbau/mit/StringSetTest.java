@@ -21,7 +21,7 @@ public class StringSetTest {
     }
 
     @Test
-    public void testSimpleSerialization() {
+    public void testSimpleSerialization() throws SerializationException {
         StringSet stringSet = instance();
 
         assertTrue(stringSet.add("abc"));
