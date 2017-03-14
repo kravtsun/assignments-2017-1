@@ -197,7 +197,7 @@ public class StringSetImpl implements StringSet, StreamSerializable {
             } else {
                 return (CHAR_POWER / 2) + (int) (stepChar - 'A');
             }
-	    }
+        }
 
         public void serialize(OutputStream out) throws SerializationException {
             intSerialize(VERTEX_MAGIC, out);
