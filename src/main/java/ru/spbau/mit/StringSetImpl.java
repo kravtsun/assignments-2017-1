@@ -69,14 +69,15 @@ public class StringSetImpl implements StringSet {
 
         for (int i = 0; i < element.length(); ++i) {
             char c = element.charAt(i);
-            if (current.next[c] == null) {
+            int stepCharIndex = Vertex.stepCharIndex(c);
+            if (current.next[stepCharIndex] == null) {
                 if (addIfNotExists) {
-                    current.next[c] = new Vertex(current);
+                    current.next[stepCharIndex] = new Vertex(current);
                 } else {
                     return null;
                 }
             }
-            current = current.next[c];
+            current = current.next[stepCharIndex];
         }
         return current;
     }
@@ -84,12 +85,13 @@ public class StringSetImpl implements StringSet {
     private void removeOnEmpty(Vertex current, char stepChar) {
         current.subTreeSize--;
         if (current.subTreeSize == 0 && current.parent != null) {
-            current.parent.next[stepChar] = null;
+            int stepCharIndex = Vertex.stepCharIndex(stepChar);
+            current.parent.next[stepCharIndex] = null;
         }
     }
 
-    private class Vertex {
-        private static final int CHAR_POWER = 2 * 256;
+    private static class Vertex {
+        private static final int CHAR_POWER = 2 * 26;
         private final Vertex[] next;
         private boolean isTerminal;
         private final Vertex parent;
@@ -100,6 +102,14 @@ public class StringSetImpl implements StringSet {
             next = new Vertex[CHAR_POWER];
             this.parent = parent;
             subTreeSize = 0;
+        }
+
+        public static int stepCharIndex(char stepChar) {
+            if (Character.isLowerCase(stepChar)) {
+                return (int) stepChar - 'a';
+            } else {
+                return (CHAR_POWER / 2) + (int) (stepChar - 'A');
+            }
         }
     }
 }
