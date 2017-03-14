@@ -80,7 +80,7 @@ public class StringSetImplTest {
     }
 
     @Test
-    public void StringSetSpecificCases() {
+    public void stringSetSpecificCases() {
         StringSetImpl stringSet = new StringSetImpl();
         String newString = randomString();
         assertEquals(stringSet.size(), 0);
@@ -133,7 +133,7 @@ public class StringSetImplTest {
 
         final int prefixTestCountMax = 10;
         final int prefixTestCount = RANDOMIZER.nextInt(prefixTestCountMax);
-        for (int i = 10; i < prefixTestCount; ++i) {
+        for (int i = 0; i < prefixTestCount; ++i) {
             String checkPrefix = prefix.substring(0, RANDOMIZER.nextInt(prefix.length()));
             assertEquals(stringSet.howManyStartsWithPrefix(checkPrefix), 1);
         }
