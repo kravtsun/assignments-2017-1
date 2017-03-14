@@ -111,20 +111,19 @@ public class StringSetImpl implements StringSet, StreamSerializable {
             } else {
                 out.write(0);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SerializationException();
         }
     }
 
     private static void intSerialize(int num, OutputStream out) throws SerializationException {
+        final int byteMask = 0xFF;
         try {
             for (int i = 0; i < BYTES_IN_INT; ++i) {
-                out.write(num & 0xFF);
+                out.write(num & byteMask);
                 num >>= BITS_IN_BYTE;
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SerializationException();
         }
     }
@@ -136,8 +135,7 @@ public class StringSetImpl implements StringSet, StreamSerializable {
                 throw new SerializationException();
             }
             return i == 1;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SerializationException();
         }
     }
@@ -150,23 +148,21 @@ public class StringSetImpl implements StringSet, StreamSerializable {
                 num |= readNum << (i * BITS_IN_BYTE);
             }
             return num;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SerializationException();
         }
     }
 
     private static class Vertex implements StreamSerializable {
         private static final int CHAR_POWER = 2 * 26;
+        private static final int VERTEX_MAGIC = 0xAABBCCDD;
+        private static final int EMPTY_VERTEX_MAGIC = 0xDDCCBBAA;
         private final Vertex[] next;
         private boolean isTerminal;
         private Vertex parent;
         private int subTreeSize;
 
-        private static final int VERTEX_MAGIC = 0x0ABBCCDD;
-        private static final int EMPTY_VERTEX_MAGIC = 0x0DCCBBAA;
-
-        public Vertex(Vertex parent) {
+        Vertex(Vertex parent) {
             isTerminal = false;
             next = new Vertex[CHAR_POWER];
             this.parent = parent;
