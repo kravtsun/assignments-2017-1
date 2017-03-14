@@ -1,7 +1,6 @@
 package ru.spbau.mit;
 
-public class StringSetImpl implements StringSet
-{
+public class StringSetImpl implements StringSet {
     private Vertex root;
 
     public StringSetImpl() {
@@ -88,7 +87,7 @@ public class StringSetImpl implements StringSet
         }
 
         current.isTerminal = false;
-        for (int i = element.length()-1; i >= 0; --i) {
+        for (int i = element.length() - 1; i >= 0; --i) {
             removeOnEmpty(current, element.charAt(i));
             current = current.parent;
         }
@@ -106,7 +105,7 @@ public class StringSetImpl implements StringSet
      * Expected complexity: O(1)
      */
     public int size() {
-        return root == null? 0 : root.subTreeSize;
+        return root == null ? 0 : root.subTreeSize;
     }
 
     /**
@@ -116,11 +115,11 @@ public class StringSetImpl implements StringSet
      */
     public int howManyStartsWithPrefix(String prefix) {
         Vertex current = traverseWord(prefix, false);
-        return current == null? 0 : current.subTreeSize;
+        return current == null ? 0 : current.subTreeSize;
     }
 
     private class Vertex {
-        private final int CHAR_POWER = 2*256;
+        private static final int CHAR_POWER = 2 * 256;
         private final Vertex[] next;
         private boolean isTerminal;
         private final Vertex parent;
