@@ -32,13 +32,6 @@ public class StringSetImpl implements StringSet {
         return current;
     }
 
-    /**
-     * Expected complexity: O(|element|)
-     *
-     * @param element
-     * @return <tt>true</tt> if this set did not already contain the specified
-     * element
-     */
     public boolean add(String element) {
         Vertex current = traverseWord(element, true);
         if (current.isTerminal) {
@@ -53,11 +46,6 @@ public class StringSetImpl implements StringSet {
         }
     }
 
-    /**
-     * Expected complexity: O(|element|)
-     *
-     * @param element
-     */
     public boolean contains(String element) {
         Vertex current = traverseWord(element, false);
         return current != null && current.isTerminal;
@@ -68,17 +56,8 @@ public class StringSetImpl implements StringSet {
         if (current.subTreeSize == 0 && current.parent != null) {
             current.parent.next[stepChar] = null;
         }
-//        else {
-//            assert false;
-//        }
     }
 
-    /**
-     * Expected complexity: O(|element|)
-     *
-     * @param element
-     * @return <tt>true</tt> if this set contained the specified element
-     */
     public boolean remove(String element) {
         Vertex current = traverseWord(element, false);
 
@@ -92,7 +71,6 @@ public class StringSetImpl implements StringSet {
             current = current.parent;
         }
 
-//        assert(current == root);
         root.subTreeSize--;
         if (root.subTreeSize == 0) {
             root = null;
@@ -101,18 +79,10 @@ public class StringSetImpl implements StringSet {
         return true;
     }
 
-    /**
-     * Expected complexity: O(1)
-     */
     public int size() {
         return root == null ? 0 : root.subTreeSize;
     }
 
-    /**
-     * Expected complexity: O(|prefix|)
-     *
-     * @param prefix
-     */
     public int howManyStartsWithPrefix(String prefix) {
         Vertex current = traverseWord(prefix, false);
         return current == null ? 0 : current.subTreeSize;
