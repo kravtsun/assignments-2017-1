@@ -155,7 +155,7 @@ public class StringSetImplTest {
         return sb.toString();
     }
 
-    private StringSetImpl testSerialization(StringSetImpl olds) {
+    private static StringSetImpl testSerialization(StringSetImpl olds) {
         StringSetImpl s = new StringSetImpl();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         olds.serialize(out);

@@ -213,11 +213,6 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         }
 
         public void deserialize(InputStream in) throws SerializationException {
-//            final int magic = intDeserialize(in);
-//            if (magic != VERTEX_MAGIC) {
-//                throw new SerializationException();
-//            }
-
             for (int i = 0; i < next.length; ++i) {
                 next[i] = deserializeVertex(in, this);
             }
