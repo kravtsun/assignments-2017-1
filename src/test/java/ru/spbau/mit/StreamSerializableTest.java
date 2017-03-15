@@ -62,7 +62,7 @@ public class StreamSerializableTest {
     private static StringSetImpl testDeserialization(ByteArrayOutputStream out) throws SerializationException {
         StringSetImpl stringSet = new StringSetImpl();
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-        ((StreamSerializable)stringSet).deserialize(in);
+        ((StreamSerializable) stringSet).deserialize(in);
         return stringSet;
     }
 

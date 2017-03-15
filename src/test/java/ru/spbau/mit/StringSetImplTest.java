@@ -1,7 +1,5 @@
 package ru.spbau.mit;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -168,7 +166,7 @@ public class StringSetImplTest {
 
     private StringSetImpl lastStringSet() {
         int size = stringSets.size();
-        assert(size > 0);
+        assert (size > 0);
         return stringSets.get(size - 1);
     }
 
