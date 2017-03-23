@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_ERR" >
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <ThresholdFilter level="ERROR"
+                             onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+        <File append="false" fileName="/tmp/LoggerTester.log" name="File">
+            <ThresholdFilter level="INFO"
+                             onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>-->
+            <PatternLayout pattern="%d %level{INFO=I, WARN=W, ERROR=E, FATAL=F} %c{10} [%t] %m%n"/>
+            <!--<PatternLayout>-->
+
+            <!--</PatternLayout>-->
+        </File>
+    </Appenders>
+    <Loggers>
+        <Logger name="ru.spbau.mit.LoggerTester" level="trace" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+        <Root level="error">
+        </Root>
+    </Loggers>
+</Configuration>
