@@ -80,17 +80,6 @@ public class CollectionsTest {
         }
     };
 
-@Test
-    public void testConstructorIsPrivate() throws NoSuchMethodException,
-                                                  IllegalAccessException,
-                                                  InvocationTargetException,
-                                                  InstantiationException {
-        Constructor<Collections> constructor = Collections.class.getDeclaredConstructor();
-        assertTrue(Modifier.isPrivate(constructor.getModifiers()));
-        constructor.setAccessible(true);
-        constructor.newInstance();
-    }
-
     @Test
     public void map() throws Exception {
         assertEquals(INT_ARR_NEGATED, Collections.map(MINUS.bind1(0), INT_ARR));
