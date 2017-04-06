@@ -1,7 +1,6 @@
 package ru.spbau.mit;
 
 public abstract class Predicate<T> extends Function1<T, Boolean> {
-    @SuppressWarnings("unchecked")
     public static final Predicate ALWAYS_TRUE = new Predicate() {
         @Override
         public Boolean apply(Object arg) {
@@ -15,7 +14,6 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
             return false;
         }
     };
-    @SuppressWarnings("checked")
 
     public Predicate<T> and(final Predicate<? super T> rhs) {
         return new Predicate<T>() {
