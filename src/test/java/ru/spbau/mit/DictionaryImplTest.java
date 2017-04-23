@@ -66,6 +66,12 @@ public class DictionaryImplTest {
         ArrayList<String> values = new ArrayList<>();
         DictionaryImpl d = new DictionaryImpl();
 
+        assertNull(d.put("key", null));
+        assertNull(d.get("key"));
+        assertTrue(d.contains("key"));
+        assertNull(d.remove("key"));
+        assertFalse(d.contains("key"));
+
         // section "put".
         for (int i = 0; i < NTESTS; ++i) {
             String key = randomString();

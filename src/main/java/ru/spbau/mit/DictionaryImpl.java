@@ -22,8 +22,8 @@ public class DictionaryImpl implements Dictionary {
         if (key == null) {
             return false;
         }
-        String value = get(key);
-        return value != null;
+        int hashIndex = bucketIndex(key);
+        return buckets[hashIndex].contains(key);
     }
 
     public String get(String key) {
@@ -42,8 +42,9 @@ public class DictionaryImpl implements Dictionary {
         Bucket bucket = buckets[hashIndex];
 
         if (bucket.canPut(key)) {
+            boolean containedBefore = bucket.contains(key);
             String oldValue = bucket.put(key, value);
-            if (oldValue == null) {
+            if (!containedBefore) {
                 size++;
             }
             return oldValue;
@@ -59,8 +60,9 @@ public class DictionaryImpl implements Dictionary {
         }
         int hashIndex = bucketIndex(key);
         Bucket bucket = buckets[hashIndex];
+        boolean containedBefore = bucket.contains(key);
         String oldValue = bucket.remove(key);
-        if (oldValue != null) {
+        if (containedBefore) {
             size--;
         }
         return oldValue;
@@ -86,7 +88,7 @@ public class DictionaryImpl implements Dictionary {
         return bucketIndex(key, buckets.length);
     }
 
-    private Bucket[] emptyBuckets(int newBucketsNumber) {
+    private static Bucket[] emptyBuckets(int newBucketsNumber) {
         Bucket[] newBuckets = new Bucket[newBucketsNumber];
         for (int i = 0; i < newBucketsNumber; ++i) {
             newBuckets[i] = new Bucket();
@@ -135,13 +137,13 @@ public class DictionaryImpl implements Dictionary {
             values = new Node[MAX_BUCKET_FILL_SIZE];
         }
 
+        public boolean contains(String key) {
+            return index(key) != -1;
+        }
+
         public String get(String key) {
             int i = index(key);
-            if (i == -1) {
-                return null;
-            } else {
-                return values[i].value;
-            }
+            return i == -1? null : values[i].value;
         }
 
         public int size() {
@@ -175,11 +177,11 @@ public class DictionaryImpl implements Dictionary {
         }
 
         public String remove(String key) {
-            String oldValue = get(key);
-
-            if (oldValue != null) {
+            String oldValue = null;
+            int i = index(key);
+            if (i != -1) {
+                oldValue = values[i].value;
                 int size = size();
-                int i = index(key);
                 values[i] = values[size - 1];
                 values[size - 1] = null;
                 assert (size() == size - 1);
