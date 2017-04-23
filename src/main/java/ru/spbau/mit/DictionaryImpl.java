@@ -143,7 +143,7 @@ public class DictionaryImpl implements Dictionary {
 
         public String get(String key) {
             int i = index(key);
-            return i == -1? null : values[i].value;
+            return i == -1 ? null : values[i].value;
         }
 
         public int size() {
