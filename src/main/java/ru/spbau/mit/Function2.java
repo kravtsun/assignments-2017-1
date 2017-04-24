@@ -1,6 +1,5 @@
 package ru.spbau.mit;
 
-// extends Function1<T1, Function1<T2, S>>
 public abstract class Function2<T1, T2, S> {
     public Function1<T1, Function1<T2, S>> curry() {
         return new Function1<T1, Function1<T2, S>>() {

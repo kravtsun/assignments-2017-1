@@ -1,14 +1,14 @@
 package ru.spbau.mit;
 
 public abstract class Predicate<T> extends Function1<T, Boolean> {
-    public static final Predicate ALWAYS_TRUE = new Predicate() {
+    public static final Predicate<Object> ALWAYS_TRUE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object arg) {
             return true;
         }
     };
 
-    public static final Predicate ALWAYS_FALSE = new Predicate() {
+    public static final Predicate<Object> ALWAYS_FALSE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object arg) {
             return false;
@@ -19,11 +19,7 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
         return new Predicate<T>() {
             @Override
             public Boolean apply(T arg) {
-                if (Predicate.this.apply(arg)) {
-                    return rhs.apply(arg);
-                } else {
-                    return false;
-                }
+                return Predicate.this.apply(arg) && rhs.apply(arg);
             }
         };
     }
@@ -32,16 +28,12 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
         return new Predicate<T>() {
             @Override
             public Boolean apply(T arg) {
-                if (Predicate.this.apply(arg)) {
-                    return true;
-                } else {
-                    return rhs.apply(arg);
-                }
+                return Predicate.this.apply(arg) || rhs.apply(arg);
             }
         };
     }
 
-    public Predicate not() {
+    public Predicate<T> not() {
         return new Predicate<T>() {
             @Override
             public Boolean apply(T arg) {
