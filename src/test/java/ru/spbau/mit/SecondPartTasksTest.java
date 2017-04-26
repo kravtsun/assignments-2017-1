@@ -51,7 +51,7 @@ public class SecondPartTasksTest {
                 )
         );
 
-        assertEquals(ARTIST_2, findPrinter(
+        assertEquals(ARTIST_5, findPrinter(
                 ImmutableMap.of(ARTIST_2, ALBUM_0
                         , ARTIST_4, ALBUM_1
                         , ARTIST_5, ALBUM_3

@@ -1,7 +1,5 @@
 package ru.spbau.mit;
 
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,12 +22,9 @@ public final class SecondPartTasks {
             try {
                 return Files.lines(p);
             } catch (IOException e) {
-//                    e.printStackTrace();
                 return Stream.empty();
             }
         };
-        System.out.println("Working Directory = " +
-                System.getProperty("user.dir"));
         return paths.stream()
                 .flatMap(linesGetter)
                 .filter(s -> s.contains(sequence))
@@ -42,7 +36,7 @@ public final class SecondPartTasks {
     // Надо промоделировать этот процесс с помощью класса java.util.Random и посчитать,
     // какова вероятность попасть в мишень.
     public static double piDividedBy4() {
-        final int POINTS_LIMIT = 10000000;
+        final int pointsLimit = 10000000;
         final Predicate<Point> isHit = p -> p.sqr() <= 1.0;
         Point seed = new Point();
 
@@ -53,8 +47,11 @@ public final class SecondPartTasks {
             }
         };
 
-        double hitNumber = (double)Stream.iterate(seed, pointGenerator).limit(POINTS_LIMIT).filter(isHit).count();
-        return hitNumber / POINTS_LIMIT;
+        final double hitNumber = (double) Stream.iterate(seed, pointGenerator)
+                .limit(pointsLimit)
+                .filter(isHit)
+                .count();
+        return hitNumber / pointsLimit;
     }
 
     // Дано отображение из имени автора в список с содержанием его произведений.
@@ -86,38 +83,33 @@ public final class SecondPartTasks {
     // Необходимо вычислить, какой товар и в каком количестве надо поставить.
     public static Map<String, Integer> calculateGlobalOrder(List<Map<String, Integer>> orders) {
         Function<Map.Entry<String, Integer>, String> classifier = e -> e.getKey();
-        Supplier<Integer> supplier = () -> (0);
-        BiConsumer<Integer, Map.Entry<String, Integer>> accumulator = (i, e) -> i += e.getValue();
-        BinaryOperator<Integer> combiner = (a, b) -> a + b;
-
-        Collector<Map.Entry<String, Integer>, ?, Integer> downstream = Collector.of(supplier, accumulator, combiner);
         return orders.stream()
-//                .reduce(Stream::concat)
                 .flatMap(m -> m.entrySet().stream())
                 .collect(Collectors.groupingBy(classifier, Collectors.summingInt(Map.Entry::getValue)));
     }
 
     private static class Point {
-        private static Random POINTS_RANDOMIZER = new Random();
+        private static Random pointsRandomizer = new Random();
         private final double x;
         private final double y;
+
+        Point() {
+            x = pointsRandomizer.nextDouble();
+            y = pointsRandomizer.nextDouble();
+        }
 
         public double sqr() {
             return x * x + y * y;
         }
-
-        Point() {
-            x = POINTS_RANDOMIZER.nextDouble();
-            y = POINTS_RANDOMIZER.nextDouble();
-        }
     }
 
     private static class Pair<F, S> {
+        private F first;
+        private S second;
+
         Pair(F first, S second) {
             this.first = first;
             this.second = second;
         }
-        F first;
-        S second;
     }
 }
