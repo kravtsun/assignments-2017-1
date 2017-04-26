@@ -67,7 +67,6 @@ public final class FirstPartTasks {
         Supplier<List<String>> listSupplier = () -> new ArrayList<String>();
         BiConsumer<List<String>, Album> listAccumulator = (strings, album) -> strings.add(album.getName());
         Collector<Album, ?, List<String>> albumToStringList = Collector.of(listSupplier, listAccumulator, listStringCombiner);
-
         Collector<Album, ?, Map<Artist, List<String>>> groupingCollector =
                 Collectors.groupingBy(a -> a.getArtist(), albumToStringList);
         return albums.collect(groupingCollector);

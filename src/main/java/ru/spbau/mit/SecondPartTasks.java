@@ -1,5 +1,11 @@
 package ru.spbau.mit;
 
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +20,21 @@ public final class SecondPartTasks {
 
     // Найти строки из переданных файлов, в которых встречается указанная подстрока.
     public static List<String> findQuotes(List<String> paths, CharSequence sequence) {
-        return paths.stream().filter((s) -> s.contains(sequence)).collect(Collectors.toList());
+        Function<String, Stream<String>> linesGetter = s -> {
+            Path p = Paths.get(s);
+            try {
+                return Files.lines(p);
+            } catch (IOException e) {
+//                    e.printStackTrace();
+                return Stream.empty();
+            }
+        };
+        System.out.println("Working Directory = " +
+                System.getProperty("user.dir"));
+        return paths.stream()
+                .flatMap(linesGetter)
+                .filter(s -> s.contains(sequence))
+                .collect(Collectors.toList());
     }
 
     // В квадрат с длиной стороны 1 вписана мишень.
@@ -66,14 +86,15 @@ public final class SecondPartTasks {
     // Необходимо вычислить, какой товар и в каком количестве надо поставить.
     public static Map<String, Integer> calculateGlobalOrder(List<Map<String, Integer>> orders) {
         Function<Map.Entry<String, Integer>, String> classifier = e -> e.getKey();
-        Supplier<Integer> supplier = () -> 0;
+        Supplier<Integer> supplier = () -> (0);
         BiConsumer<Integer, Map.Entry<String, Integer>> accumulator = (i, e) -> i += e.getValue();
         BinaryOperator<Integer> combiner = (a, b) -> a + b;
 
         Collector<Map.Entry<String, Integer>, ?, Integer> downstream = Collector.of(supplier, accumulator, combiner);
         return orders.stream()
+//                .reduce(Stream::concat)
                 .flatMap(m -> m.entrySet().stream())
-                .collect(Collectors.groupingBy(classifier, downstream));
+                .collect(Collectors.groupingBy(classifier, Collectors.summingInt(Map.Entry::getValue)));
     }
 
     private static class Point {
