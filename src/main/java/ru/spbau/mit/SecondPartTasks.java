@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.util.function.Predicate.*;
 
 public final class SecondPartTasks {
     private SecondPartTasks() {}
@@ -37,7 +38,7 @@ public final class SecondPartTasks {
     // какова вероятность попасть в мишень.
     public static double piDividedBy4() {
         final int pointsLimit = 10000000;
-        final Predicate<Point> isHit = p -> p.sqr() <= 1.0;
+        final java.util.function.Predicate<Point> isHit = p -> p.sqr() <= 1.0;
         Point seed = new Point();
 
         UnaryOperator<Point> pointGenerator = point -> new Point();

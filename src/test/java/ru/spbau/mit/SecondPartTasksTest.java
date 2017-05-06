@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static ru.spbau.mit.SecondPartTasks.*;
+import static java.util.Collections.emptyList;
 
 public class SecondPartTasksTest {
 
@@ -22,7 +23,7 @@ public class SecondPartTasksTest {
                 , "src/main/java/ru/spbau/mit/FirstPartTasks.java"
                 , "src/main/java/ru/spbau/mit/SecondPartTasks.java"
         );
-        assertEquals(Collections.emptyList(), findQuotes(files, "qaef2wefadsf"));
+        assertEquals(emptyList(), findQuotes(files, "qaef2wefadsf"));
 
         assertEquals(Stream.of(
                 "    private String name;"
@@ -46,7 +47,7 @@ public class SecondPartTasksTest {
                 ImmutableMap.of(ARTIST_0, ALBUM_2
                 , ARTIST_3, ALBUM_9
                 , ARTIST_7, ALBUM_5
-                , ARTIST_1, Collections.emptyList()
+                , ARTIST_1, emptyList()
                 )
                 )
         );
