@@ -1,3 +1,0 @@
-[submodule "src/private"]
-	path = src/private
-	url = git@bitbucket.org:bintree/test.git
