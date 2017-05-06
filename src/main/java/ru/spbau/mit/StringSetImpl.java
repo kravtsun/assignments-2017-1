@@ -106,11 +106,7 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
     private static void booleanSerialize(boolean b, OutputStream out) throws SerializationException {
         try {
-            if (b) {
-                out.write(1);
-            } else {
-                out.write(0);
-            }
+            out.write(b ? 1 : 0);
         } catch (IOException e) {
             throw new SerializationException();
         }
@@ -155,11 +151,11 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
     private static class Vertex implements StreamSerializable {
         private static final int CHAR_POWER = 2 * 26;
-        private static final int VERTEX_MAGIC = 0xAABBCCDD;
-        private static final int EMPTY_VERTEX_MAGIC = 0xDDCCBBAA;
+        private static final int VERTEX_FLAG = 0xAABBCCDD;
+        private static final int EMPTY_VERTEX_FLAG = 0xDDCCBBAA;
         private final Vertex[] next;
         private boolean isTerminal;
-        private Vertex parent;
+        private final Vertex parent;
         private int subTreeSize;
 
         Vertex(Vertex parent) {
@@ -171,18 +167,17 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
         public static void serializeVertex(Vertex v, OutputStream out) throws SerializationException {
             if (v == null) {
-                intSerialize(EMPTY_VERTEX_MAGIC, out);
+                intSerialize(EMPTY_VERTEX_FLAG, out);
             } else {
                 v.serialize(out);
             }
         }
 
-        // Question: constructor would be better?
         public static Vertex deserializeVertex(InputStream in, Vertex parent) throws SerializationException {
             final int magic = intDeserialize(in);
-            if (magic == EMPTY_VERTEX_MAGIC) {
+            if (magic == EMPTY_VERTEX_FLAG) {
                 return null;
-            } else if (magic == VERTEX_MAGIC) {
+            } else if (magic == VERTEX_FLAG) {
                 Vertex v = new Vertex(parent);
                 v.deserialize(in);
                 return v;
@@ -200,10 +195,10 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         }
 
         public void serialize(OutputStream out) throws SerializationException {
-            intSerialize(VERTEX_MAGIC, out);
+            intSerialize(VERTEX_FLAG, out);
             for (int i = 0; i < next.length; ++i) {
                 if (next[i] == null) {
-                    intSerialize(EMPTY_VERTEX_MAGIC, out);
+                    intSerialize(EMPTY_VERTEX_FLAG, out);
                 } else {
                     next[i].serialize(out);
                 }
