@@ -1,7 +1,10 @@
 package ru.spbau.mit;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.IntBinaryOperator;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -63,23 +66,21 @@ public final class FirstPartTasks {
                         Function.identity(),
                         Collectors.counting()
                 ));
-        Stream<Long> sameCounts = albumsCount.entrySet().stream().map(e -> e.getValue() - 1);
-        return sameCounts.mapToLong(Long::longValue).sum();
+        return albumsCount.entrySet()
+                .stream()
+                .map(e -> e.getValue() - 1)
+                .mapToLong(Long::longValue)
+                .sum();
     }
 
     // Альбом в котором максимум рейтинга минимален
     // (если в альбоме нет ни одного трека, считать, что максимум рейтинга в нем --- 0)
     public static Optional<Album> minMaxRating(Stream<Album> albums) {
-        ToIntFunction<Album> ratingGetter = new ToIntFunction<Album>() {
-            @Override
-            public int applyAsInt(Album a) {
-                return a.getTracks()
-                        .stream()
-                        .mapToInt(Track::getRating)
-                        .max()
-                        .orElse(0);
-            }
-        };
+        ToIntFunction<Album> ratingGetter = a -> a.getTracks()
+                .stream()
+                .mapToInt(Track::getRating)
+                .max()
+                .orElse(0);
         Comparator<Album> albumComparator = Comparator.comparingInt(ratingGetter);
         return albums.min(albumComparator);
     }
