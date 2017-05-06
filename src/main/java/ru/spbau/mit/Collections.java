@@ -7,7 +7,7 @@ public final class Collections {
     private Collections() {}
 
     public static <T, S> List<S> map(Function1<? super T, S> f, Iterable<T> c) {
-        List<S> newcol = new ArrayList<S>();
+        List<S> newcol = new ArrayList<>();
         for (T el : c) {
             newcol.add(f.apply(el));
         }
@@ -15,7 +15,7 @@ public final class Collections {
     }
 
     public static <T> List<T> filter(Predicate<? super T> pred, Iterable<T> c) {
-        List<T> newcol = new ArrayList<T>();
+        List<T> newcol = new ArrayList<>();
         for (T el : c) {
             if (pred.apply(el)) {
                 newcol.add(el);
@@ -25,7 +25,7 @@ public final class Collections {
     }
 
     public static <T> List<T> takeWhile(Predicate<? super T> pred, Iterable<T> c) {
-        List<T> newcol = new ArrayList<T>();
+        List<T> newcol = new ArrayList<>();
         for (T el : c) {
             if (!pred.apply(el)) {
                 break;

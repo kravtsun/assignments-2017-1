@@ -41,7 +41,4 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
             }
         };
     }
-
-    @Override
-    public abstract Boolean apply(T arg);
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
 public class CollectionsTest {
@@ -50,7 +51,7 @@ public class CollectionsTest {
 
     private static final Predicate<Object> NOT_NULL = IS_NULL.not();
 
-    private static final List<Object> EMPTY_ARR = (List<Object>) emptyList();
+    private static final List<Object> EMPTY_ARR = emptyList();
 
     private static final Function2<Integer, Integer, Integer> MINUS = new Function2<Integer, Integer, Integer>() {
         @Override
@@ -92,10 +93,7 @@ public class CollectionsTest {
 
     @Test
     public void filter() throws Exception {
-        final ArrayList<Integer> positiveOnly = new ArrayList<Integer>() { {
-            add(-MAGIC_2);
-            add(-MAGIC_5);
-        } };
+        final List<Integer> positiveOnly = Arrays.asList(-MAGIC_2, -MAGIC_5);
         assertEquals(positiveOnly, Collections.filter(IS_POSITIVE_INTEGER, INT_ARR_NEGATED));
         assertEquals(INT_ARR, Collections.filter(Predicate.ALWAYS_TRUE, INT_ARR));
         assertEquals(EMPTY_ARR, Collections.filter(Predicate.ALWAYS_FALSE, INT_ARR));
@@ -108,7 +106,7 @@ public class CollectionsTest {
             }
         };
         final int ten = 10;
-        assertEquals(Arrays.asList(ten), Collections.filter(isTen, INT_ARR));
+        assertEquals(singletonList(ten), Collections.filter(isTen, INT_ARR));
     }
 
     @Test
@@ -119,7 +117,7 @@ public class CollectionsTest {
                 return charSequence.length() < 2;
             }
         };
-        assertEquals(Arrays.asList("1"), Collections.takeWhile(u2, INT_ARR_STRINGED));
+        assertEquals(singletonList("1"), Collections.takeWhile(u2, INT_ARR_STRINGED));
         assertEquals(EMPTY_ARR, Collections.takeWhile(IS_POSITIVE_INTEGER, INT_ARR_NEGATED));
         assertEquals(INT_ARR_STRINGED, Collections.takeWhile(Predicate.ALWAYS_TRUE, INT_ARR_STRINGED));
         ArrayList<Integer> nullArray = new ArrayList<>();
@@ -131,9 +129,9 @@ public class CollectionsTest {
     @Test
     public void takeUnless() throws Exception {
         assertEquals(EMPTY_ARR, Collections.takeUnless(IS_POSITIVE_INTEGER.not(), INT_ARR_NEGATED));
-        assertEquals(Arrays.asList(-1), Collections.takeUnless(IS_POSITIVE_INTEGER, INT_ARR_NEGATED));
+        assertEquals(singletonList(-1), Collections.takeUnless(IS_POSITIVE_INTEGER, INT_ARR_NEGATED));
         assertEquals(INT_ARR, Collections.takeUnless(Predicate.ALWAYS_FALSE, INT_ARR));
-        ArrayList<Objects> nullArr = new ArrayList<>();
+        ArrayList<Integer> nullArr = new ArrayList<>();
         nullArr.add(null);
         assertEquals(nullArr, Collections.takeUnless(NOT_NULL, ARR_WITH_NULL));
         assertEquals(EMPTY_ARR, Collections.takeUnless(IS_NULL, ARR_WITH_NULL));
@@ -142,7 +140,7 @@ public class CollectionsTest {
     @Test
     public void foldl() throws Exception {
         final Integer result = 10;
-        assertEquals(result, Collections.foldl(MINUS, INT_ARR, (Integer) 0));
+        assertEquals(result, Collections.foldl(MINUS, INT_ARR, 0));
 
         final Function2<String, Object, String> accumulateString = new Function2<String, Object, String>() {
             @Override

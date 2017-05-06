@@ -1,22 +1,17 @@
 package ru.spbau.mit;
 
 import org.junit.Test;
-
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
 
 public class Function1Test {
-    private static Function1<Integer[], Collection<Integer>> fromArrayToCollection =
+    private static final Function1<Integer[], Collection<Integer>> FROM_ARRAY_TO_COLLECTION =
             new Function1<Integer[], Collection<Integer>>() {
                 @Override
                 public Collection<Integer> apply(Integer[] arg) {
-                    Collection<Integer> c = new ArrayList<Integer>();
-                    for (Object o : arg) {
-                        c.add((Integer) o);
-                    }
-                    return c;
+                    return Arrays.asList(arg);
                 }
             };
 
@@ -24,13 +19,6 @@ public class Function1Test {
         @Override
         public Integer apply(Integer arg) {
             return arg * arg;
-        }
-    };
-
-    private final Function2<Integer, Integer, Integer> minus = new Function2<Integer, Integer, Integer>() {
-        @Override
-        public Integer apply2(Integer arg1, Integer arg2) {
-            return arg1 - arg2;
         }
     };
 
@@ -79,10 +67,10 @@ public class Function1Test {
 
         final int arraySize = 10;
         Integer[] integers = new Integer[arraySize];
-        fromArrayToCollection.apply(integers); // compilation OK.
+        FROM_ARRAY_TO_COLLECTION.apply(integers); // compilation OK.
 
 //        Double []doubles = new Double[arraySize];
-//        fromArrayToCollection.apply(doubles); // compilation Failed.
+//        FROM_ARRAY_TO_COLLECTION.apply(doubles); // compilation Failed.
 
 //        Function1<Number, Object>
 //        Function1<Object, Boolean> u1 = new Function1<Object, Boolean>() {
