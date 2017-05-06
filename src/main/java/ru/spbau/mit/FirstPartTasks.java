@@ -2,7 +2,6 @@ package ru.spbau.mit;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -22,20 +21,21 @@ public final class FirstPartTasks {
 
     // Список треков, отсортированный лексикографически по названию, включающий все треки альбомов из 'albums'
     public static List<String> allTracksSorted(Stream<Album> albums) {
-        Stream<Album> sortedAlbums = albums.sorted(Comparator.comparing(Album::getName));
-        Function<Album, Stream<String>> getTracksOfAlbum =
-                (Album album) -> album.getTracks().stream().map(track -> {
-            return track.getName();
-        });
-        return sortedAlbums.flatMap(getTracksOfAlbum).sorted(String::compareTo).collect(Collectors.toList());
+        return albums
+                .map(Album::getTracks)
+                .flatMap(Collection::stream)
+                .map(Track::getName)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     // Список альбомов, в которых есть хотя бы один трек с рейтингом более 95, отсортированный по названию
     public static List<Album> sortedFavorites(Stream<Album> s) {
         final int threshold = 95;
-        final Predicate<Track> trackPredicate = track -> track.getRating() > threshold;
-        Predicate<Album> albumPredicate = a -> a.getTracks().stream().anyMatch(trackPredicate);
-        return s.filter(albumPredicate).sorted(Comparator.comparing(Album::getName)).collect(Collectors.toList());
+        return s.filter(a -> a.getTracks().stream()
+                                          .anyMatch(track -> track.getRating() > threshold))
+                .sorted(Comparator.comparing(Album::getName))
+                .collect(Collectors.toList());
     }
 
     // Сгруппировать альбомы по артистам
@@ -45,47 +45,39 @@ public final class FirstPartTasks {
 
     // Сгруппировать альбомы по артистам (в качестве значения вместо объекта 'Album' использовать его имя)
     public static Map<Artist, List<String>> groupByArtistMapName(Stream<Album> albums) {
-        Supplier<List<String>> listSupplier = () -> new ArrayList<String>();
-        BiConsumer<List<String>, Album> listAccumulator = (strings, album) -> strings.add(album.getName());
-        BinaryOperator<List<String>> listStringCombiner = (left, right) -> {
-            left.addAll(right);
-            return left;
-        };
-        Collector<Album, ?, List<String>> albumToStringList =
-                Collector.of(listSupplier, listAccumulator, listStringCombiner);
-        Collector<Album, ?, Map<Artist, List<String>>> groupingCollector =
-                Collectors.groupingBy(a -> a.getArtist(), albumToStringList);
-        return albums.collect(groupingCollector);
+        return albums.collect(
+                Collectors.groupingBy(
+                        Album::getArtist,
+                        Collectors.mapping(
+                                Album::getName,
+                                Collectors.toList()
+                        )
+                )
+        );
     }
 
     // Число повторяющихся альбомов в потоке
     public static long countAlbumDuplicates(Stream<Album> albums) {
-        Collector<Album, ?, Map<Album, Integer>> counter =
-                Collectors.groupingBy(a -> a, Collectors.summingInt(a -> 1));
-        Function<Map<Album, Integer>, Integer> nonDistinctCounter = (m) -> {
-            Integer cnt = 0;
-            for (Map.Entry<Album, Integer> p : m.entrySet()) {
-                cnt += p.getValue();
-            }
-            return cnt - m.size();
-        };
-
-        return albums.collect(Collectors.collectingAndThen(counter, nonDistinctCounter));
+        Map<Album, Long> albumsCount = albums.collect(
+                Collectors.groupingBy(
+                        Function.identity(),
+                        Collectors.counting()
+                ));
+        Stream<Long> sameCounts = albumsCount.entrySet().stream().map(e -> e.getValue() - 1);
+        return sameCounts.mapToLong(Long::longValue).sum();
     }
 
     // Альбом в котором максимум рейтинга минимален
     // (если в альбоме нет ни одного трека, считать, что максимум рейтинга в нем --- 0)
     public static Optional<Album> minMaxRating(Stream<Album> albums) {
         ToIntFunction<Album> ratingGetter = new ToIntFunction<Album>() {
-            private final Track defaultTrack = new Track("", 0);
             @Override
             public int applyAsInt(Album a) {
                 return a.getTracks()
                         .stream()
-                        .max(Comparator
-                                .comparingInt(Track::getRating))
-                        .orElse(defaultTrack)
-                        .getRating();
+                        .mapToInt(Track::getRating)
+                        .max()
+                        .orElse(0);
             }
         };
         Comparator<Album> albumComparator = Comparator.comparingInt(ratingGetter);
@@ -121,8 +113,6 @@ public final class FirstPartTasks {
 
     // Вернуть поток из объектов класса 'clazz'
     public static <R> Stream<R> filterIsInstance(Stream<?> s, Class<R> clazz) {
-        Predicate<Object> classPredicate = r -> clazz.isAssignableFrom(r.getClass());
-        Function<Object, R> converter = (o) -> (R) o;
-        return s.filter(classPredicate).map(converter);
+        return s.filter(clazz::isInstance).map(clazz::cast);
     }
 }

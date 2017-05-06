@@ -40,12 +40,7 @@ public final class SecondPartTasks {
         final Predicate<Point> isHit = p -> p.sqr() <= 1.0;
         Point seed = new Point();
 
-        UnaryOperator<Point> pointGenerator = new UnaryOperator<Point>() {
-            @Override
-            public Point apply(Point point) {
-                return new Point();
-            }
-        };
+        UnaryOperator<Point> pointGenerator = point -> new Point();
 
         final double hitNumber = (double) Stream.iterate(seed, pointGenerator)
                 .limit(pointsLimit)
@@ -61,16 +56,11 @@ public final class SecondPartTasks {
             String name = stringListEntry.getKey();
             Integer length = stringListEntry.getValue().stream()
                     .mapToInt(String::length)
-                    .reduce(0, (l, r) -> l + r);
-            return new Pair(name, length);
+                    .sum();
+            return new Pair<>(name, length);
         };
 
-        Comparator<Pair<String, Integer>> bestAuthorComparator = new Comparator<Pair<String, Integer>>() {
-            @Override
-            public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-                return o1.second.compareTo(o2.second);
-            }
-        };
+        Comparator<Pair<String, Integer>> bestAuthorComparator = Comparator.comparing(o -> o.second);
 
         return compositions.entrySet()
                 .stream()

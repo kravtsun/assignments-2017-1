@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static ru.spbau.mit.SecondPartTasks.*;
@@ -13,24 +15,22 @@ public class SecondPartTasksTest {
     @Test
     public void testFindQuotes() {
         List<String> files = Arrays.asList(
-                "src/main/java/ru/spbau/mit/Artist.java"
+                "src/main/java/fru/spbau/mit/Artist.java"
                 , "src/main/java/ru/spbau/mit/Album.java"
                 , "src/main/java/ru/spbau/mit/.gitkeep"
                 , "src/main/java/ru/spbau/mit/Track.java"
                 , "src/main/java/ru/spbau/mit/FirstPartTasks.java"
                 , "src/main/java/ru/spbau/mit/SecondPartTasks.java"
         );
-        assertEquals(Arrays.asList(), findQuotes(files, (CharSequence) "qaef2wefadsf"));
-        List<String> v = findQuotes(files, (CharSequence) "String name");
+        assertEquals(Collections.emptyList(), findQuotes(files, "qaef2wefadsf"));
 
-        assertEquals(Arrays.asList("    private final String name;"
-                , "    public Artist(String name) {"
-                , "    private String name;"
+        assertEquals(Stream.of(
+                "    private String name;"
                 , "    public Album(Artist artist, String name, Track... tracks) {"
                 , "    private final String name;"
                 , "    Track(String name, int rating) {"
-                , "            String name = stringListEntry.getKey();")
-                , findQuotes(files, (CharSequence) "String name"));
+                , "            String name = stringListEntry.getKey();").sorted().collect(Collectors.toList()),
+                findQuotes(files, "String name").stream().sorted().collect(Collectors.toList()));
     }
 
     @Test
@@ -46,7 +46,7 @@ public class SecondPartTasksTest {
                 ImmutableMap.of(ARTIST_0, ALBUM_2
                 , ARTIST_3, ALBUM_9
                 , ARTIST_7, ALBUM_5
-                , ARTIST_1, Arrays.asList()
+                , ARTIST_1, Collections.emptyList()
                 )
                 )
         );
