@@ -2,9 +2,7 @@ package ru.spbau.mit;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -65,6 +63,7 @@ public class DictionaryImplTest {
         ArrayList<String> keys = new ArrayList<>();
         ArrayList<String> values = new ArrayList<>();
         DictionaryImpl d = new DictionaryImpl();
+        assertFalse(d.contains(null));
 
         assertNull(d.put("key", null));
         assertNull(d.get("key"));
@@ -129,6 +128,8 @@ public class DictionaryImplTest {
         ArrayList<String> keys = new ArrayList<>();
         final int clearFrequency = 3;
         for (int i = 0; i < NTESTS; ++i) {
+            String random = randomString();
+            assertEquals(keys.contains(random), d.contains(random));
             String key = randomString();
             String value = randomString();
             if (keys.contains(key)) {
@@ -210,14 +211,15 @@ public class DictionaryImplTest {
             if (keys.contains(key)) {
                 continue;
             }
-            d.put(key, value);
+            assertNull(d.put(key, value));
             keys.add(key);
         }
 
         assertEquals(keys.size(), d.size());
         for (String key : keys) {
             assertTrue(d.contains(key));
-            d.remove(key);
+            d.put(key, randomString());
+            assertNotNull(d.remove(key));
             assertNull(d.get(key));
             assertFalse(d.contains(key));
             d.put(key, randomString());
@@ -228,9 +230,65 @@ public class DictionaryImplTest {
         assertEquals(keys.size(), d.size());
         for (String key : keys) {
             assertTrue(d.contains(key));
-            d.remove(key);
+            assertNotNull(d.remove(key));
             assertNull(d.get(key));
         }
         assertEquals(d.size(), 0);
+    }
+
+    @Test
+    public void hashMapTest() {
+        HashMap<String, String> hm = new HashMap<>();
+        DictionaryImpl d = new DictionaryImpl();
+
+        final int clearFrequency = 50;
+        final int insertFrequency = 94;
+        final int removeFrequency = 60;
+
+        ArrayList<String> keys = new ArrayList<>();
+        String key1 = randomString();
+
+        for (int i = 0; i < NTESTS; ++i) {
+            assertTrue(i==0 || d.contains(key1));
+//            if (i > 0)
+            d.put(key1, randomString());
+            assertNotNull(d.put(key1, randomString()));
+        }
+
+        hm.put(key1, d.get(key1));
+        keys.add(key1);
+
+        for (int i = 0; i < NTESTS; ++i) {
+
+            if (tossCoin(clearFrequency)) {
+                hm.clear();
+                keys.clear();
+                d.clear();
+            }
+
+            if (tossCoin(insertFrequency)) {
+                String key = randomString();
+                String value = randomString();
+                assertEquals(hm.put(key, value), d.put(key, value));
+                if (!keys.contains(key)) {
+                    keys.add(key);
+                }
+            }
+
+            if (!keys.isEmpty() && tossCoin(removeFrequency)) {
+                int j = RANDOMIZER.nextInt(keys.size());
+                String key = keys.get(j);
+                assertEquals(hm.remove(key), d.remove(key));
+                keys.remove(key);
+            }
+            assertEquals(keys.size(), hm.size());
+            assertEquals(hm.size(), d.size());
+        }
+
+        for (String key : keys) {
+            assertTrue(d.contains(key));
+            assertEquals(d.get(key), hm.get(key));
+            assertEquals(d.remove(key), hm.remove(key));
+        }
     }
 }
