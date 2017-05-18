@@ -1,5 +1,6 @@
 package ru.spbau.mit;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.*;
@@ -67,8 +68,11 @@ public class SimpleImplementor implements Implementor {
     }
 
     private Class getClazz(String dir, String className) throws MalformedURLException, ClassNotFoundException {
-        URL[] urls = new URL[]{new URL(dir)};
-        ClassLoader classLoader = new URLClassLoader(urls, getCurrentClassLoader());
+        File outputDirectoryFile = new File(outputDirectory);
+        File testDirectoryFile = new File(dir);
+        URL[] urls = new URL[]{outputDirectoryFile.toURI().toURL(),
+                testDirectoryFile.toURI().toURL()};
+        ClassLoader classLoader = new URLClassLoader(urls);
         return Class.forName(className, false, classLoader);
     }
 
