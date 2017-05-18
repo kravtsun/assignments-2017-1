@@ -13,11 +13,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 // TODO smart tabulation.
 public class SimpleImplementor implements Implementor {
@@ -76,7 +78,7 @@ public class SimpleImplementor implements Implementor {
         URL[] urls = new URL[]{outputDirectoryFile.toURI().toURL(),
                 testDirectoryFile.toURI().toURL()};
         ClassLoader classLoader = new URLClassLoader(urls);
-        return Class.forName(className, false, classLoader);
+        return classLoader.loadClass(className);
     }
 
     @NotNull
@@ -242,11 +244,23 @@ public class SimpleImplementor implements Implementor {
         }
     }
 
+    private static Stream<Method> getMethodsStream(@Nullable Class clazz) {
+        if (Objects.isNull(clazz)) {
+            return Stream.empty();
+        }
+
+        Stream<Method> publicMethodsStream = Arrays.stream(clazz.getMethods());
+        Stream<Method> ownedMethodsStream = Arrays.stream(clazz.getDeclaredMethods());
+        Stream<Method> parentMethodsStream = getMethodsStream(clazz.getSuperclass());
+        return Stream.concat(Stream.concat(publicMethodsStream, ownedMethodsStream), parentMethodsStream)
+                .filter((m) -> Modifier.isAbstract(m.getModifiers()))
+                .distinct();
+    }
+
     private static void writeMethods(Writer writer, Class baseClazz) throws IOException {
 //        if ((baseClazz.getModifiers() & Modifier.ABSTRACT) != 0) {
         Consumer<Method> methodWork = method -> {
             Class methodReturnType = method.getReturnType();
-
             try {
                 writer.append(overridenMethodModifer(method))
                         .append(SPACE)
@@ -265,13 +279,7 @@ public class SimpleImplementor implements Implementor {
                 throw new UncheckedIOException(e);
             }
         };
-
-        Stream<Method> publicMethodsStream = Arrays.stream(baseClazz.getMethods());
-        Stream<Method> ownedMethodsStream = Arrays.stream(baseClazz.getDeclaredMethods());
-        Stream.concat(publicMethodsStream, ownedMethodsStream)
-                        .filter((m) -> Modifier.isAbstract(m.getModifiers()))
-                        .distinct()
-                        .forEach(methodWork);
+        getMethodsStream(baseClazz).distinct().forEach(methodWork);
     }
 
     private void work(String className, Class baseClazz) throws IOException, ImplementorException {
