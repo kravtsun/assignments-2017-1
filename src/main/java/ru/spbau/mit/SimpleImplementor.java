@@ -2,6 +2,7 @@ package ru.spbau.mit;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.reflect.*;
 import java.net.MalformedURLException;
@@ -12,7 +13,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -149,7 +152,7 @@ public class SimpleImplementor implements Implementor {
     }
 
     // TODO variable parameters.
-    private String parametersString(Parameter[] parameters) {
+    private static String parametersString(Parameter[] parameters) {
         // TODO ensure ordering.
         return Arrays.stream(parameters)
                 .map((p) -> getFullClassName(p.getType()) + SPACE + p.getName())
@@ -157,7 +160,7 @@ public class SimpleImplementor implements Implementor {
                 .collect(Collectors.joining(", "));
     }
 
-    private String thrownExceptionsString(Class[] exceptionTypes) {
+    private static String thrownExceptionsString(Class[] exceptionTypes) {
         String exceptionsString = Arrays.stream(exceptionTypes)
                 .map(Class::getCanonicalName)
                 .collect(Collectors.joining(", "));
@@ -169,6 +172,10 @@ public class SimpleImplementor implements Implementor {
         // assuming there is no private constructors as we won't be able to use it anyway.
         for (Constructor constructor : baseClazz.getConstructors()) {
             Parameter[] parameters = constructor.getParameters();
+            // default constructor could be implicitly generated.
+            if (parameters.length == 0) {
+                continue;
+            }
             writer.append(simpleName)
                     .append(OPENING_PARENTHESIS)
                     .append(parametersString(parameters))
@@ -191,55 +198,80 @@ public class SimpleImplementor implements Implementor {
 
     }
 
-    private void writeMethods(Writer writer, Class baseClazz) throws IOException {
-        if ((baseClazz.getModifiers() & Modifier.ABSTRACT) != 0) {
-            for (Method method : baseClazz.getMethods()) {
-                final int mods = method.getModifiers();
-                if (Modifier.isAbstract(mods)) {
-                    Class methodReturnType = method.getReturnType();
-                    writer.append("public ")
-                            .append(getFullClassName(methodReturnType))
-                            .append(SPACE)
-                            .append(method.getName());
+    private static void writeMethodBody(Writer writer, Class methodReturnType) throws IOException {
+        // method implementation.
+        writer.append(OPENING_BRACE).append(NEW_LINE);
 
-                    // signature without modifiers and name.
-
-                    writer.append(OPENING_PARENTHESIS)
-                            .append(parametersString(method.getParameters()))
-                            .append(CLOSING_PARENTHESIS)
-                            .append(thrownExceptionsString(method.getExceptionTypes()))
-                            .append(SPACE);
-
-                    // method implementation.
-                    writer.append(OPENING_BRACE).append(NEW_LINE);
-
-                    // TODO check for cast warnings.
-                    if (!methodReturnType.isPrimitive() || methodReturnType != void.class) {
-                        String returnValueString;
-                        if (!methodReturnType.isPrimitive()) {
-                            returnValueString = "null";
-                        } else if (methodReturnType == byte.class
-                                || methodReturnType == char.class
-                                || methodReturnType == short.class
-                                || methodReturnType == int.class
-                                || methodReturnType == long.class) {
-                            returnValueString = "0";
-                        } else if (methodReturnType == boolean.class) {
-                            returnValueString = "false";
-                        } else if (methodReturnType == float.class || methodReturnType == double.class) {
-                            returnValueString = "0.0";
-                        } else {
-                            throw new UnknownError();
-                        }
-                        writer.append("return ")
-                                .append(returnValueString)
-                                .append(COLON)
-                                .append(NEW_LINE);
-                    }
-                    writer.append(CLOSING_BRACE).append(NEW_LINE);
-                }
+        // TODO check for cast warnings.
+        if (!methodReturnType.isPrimitive() || methodReturnType != void.class) {
+            String returnValueString;
+            if (!methodReturnType.isPrimitive()) {
+                returnValueString = "null";
+            } else if (methodReturnType == byte.class
+                    || methodReturnType == char.class
+                    || methodReturnType == short.class
+                    || methodReturnType == int.class
+                    || methodReturnType == long.class) {
+                returnValueString = "0";
+            } else if (methodReturnType == boolean.class) {
+                returnValueString = "false";
+                float f = 0.0f;
+            } else if (methodReturnType == float.class) {
+                returnValueString = "0.0f";
+            } else if (methodReturnType == double.class) {
+                returnValueString = "0.0";
+            } else {
+                throw new UnknownError();
             }
+            writer.append("return ")
+                    .append(returnValueString)
+                    .append(COLON)
+                    .append(NEW_LINE);
         }
+        writer.append(CLOSING_BRACE).append(NEW_LINE);
+    }
+
+    private static String overridenMethodModifer(Method method) {
+        final int mods = method.getModifiers();
+        if (Modifier.isPublic(mods)) {
+            return "public";
+        } else if (Modifier.isProtected(mods)) {
+            return "protected";
+        } else {
+            throw new IllegalArgumentException("package-private methods are assumed to be absent.");
+        }
+    }
+
+    private static void writeMethods(Writer writer, Class baseClazz) throws IOException {
+//        if ((baseClazz.getModifiers() & Modifier.ABSTRACT) != 0) {
+        Consumer<Method> methodWork = method -> {
+            Class methodReturnType = method.getReturnType();
+
+            try {
+                writer.append(overridenMethodModifer(method))
+                        .append(SPACE)
+                        .append(getFullClassName(methodReturnType))
+                        .append(SPACE)
+                        .append(method.getName());
+
+                // signature without modifiers and name.
+                writer.append(OPENING_PARENTHESIS)
+                        .append(parametersString(method.getParameters()))
+                        .append(CLOSING_PARENTHESIS)
+                        .append(SPACE)
+                        .append(thrownExceptionsString(method.getExceptionTypes()));
+                writeMethodBody(writer, method.getReturnType());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+
+        Stream<Method> publicMethodsStream = Arrays.stream(baseClazz.getMethods());
+        Stream<Method> ownedMethodsStream = Arrays.stream(baseClazz.getDeclaredMethods());
+        Stream.concat(publicMethodsStream, ownedMethodsStream)
+                        .filter((m) -> Modifier.isAbstract(m.getModifiers()))
+                        .distinct()
+                        .forEach(methodWork);
     }
 
     private void work(String className, Class baseClazz) throws IOException, ImplementorException {

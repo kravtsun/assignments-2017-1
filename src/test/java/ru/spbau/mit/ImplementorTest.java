@@ -83,11 +83,8 @@ public class ImplementorTest {
 
     @Test
     public void extendAbstracts() throws Exception {
-        final String className = "java.lang.Object";
-        Implementor implementor = newImplementor();
-        final String implClassName = implementor.implementFromStandardLibrary(className);
-        Class implClass = compileAndLoadClass(implClassName);
-        assertThat(implClass.getSuperclass().getCanonicalName(), is(className));
+        checkAbstractClassImplementationFromStandardLibrary("java.lang.Object");
+        checkAbstractClassImplementationFromStandardLibrary("java.awt.KeyboardFocusManager");
     }
 
     private void checkInterfaceImplementationFromFolder(String className) throws Exception {
