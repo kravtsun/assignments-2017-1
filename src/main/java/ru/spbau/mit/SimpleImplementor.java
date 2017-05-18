@@ -1,9 +1,5 @@
 package ru.spbau.mit;
 
-import com.sun.istack.internal.NotNull;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.awt.*;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.*;
@@ -14,36 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.FileAttribute;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-/** Implementor – объект, позволяющий сгенерировать файл с java классом,
- *  который реализует данный интерфейс или абстрактный класс.
- *  Под реализацией подразумевается следующее:
- *   1) Это файл с исходным кодом сгенерированного класса.
- *   2) Исходный код успешно компилируется.
- *   3) Класс в файле реализует данный интерфейс/является наследником данного класса.
- *   4) Класс в файле не является абстрактным.
- *
- * Ограничения на входной интерфейс/абстрактный класс.
- *   1) Интерфейс/Абстрактный класс всегда публичен.
- *   2) Интерфейс/Абстрактный класс может находится в произвольном пакете,
- *      например ru.spbau.mit.java2017.implementor.InputInterface.
- *   3) Интерфейс/Абстрактный класс может находится в стандартной библиотеке.
- *   4) Интерфейс/Абстрактный класс может быть наследником класса/быть реализацией
- *      интерфейсов из стандартной библиотеки.
- *   5) Внутри интерфейса/абстрактного класса нет полей/методов с default видимостью (без модификатора видимости).
- *   6) Не требуется поддерживать нововведения Java 8.
- *   7) Не требуется поддерживать модификаторы, отличные от модификаторов
- *      доступа, static, final (например, synchronized)
- *   8) Не требуется поддерживать generics. Достаточно работать с ними так, как будто вы не указывали тип,
- *      например, нужно реализовать не Comparable<T>, а просто Comparable.
- *   9) Не требуется поддерживать аннотации.
- *
- *   Реализация Implementor'а должна содержать конструктор от строки `outputDirectory`
- *   `outputDirectory` – путь к папке, в которую будут записываться сгенерированные исходники.
- */
+import org.jetbrains.annotations.NotNull;
 
 // TODO smart tabulation.
 public class SimpleImplementor implements Implementor {
@@ -54,7 +24,7 @@ public class SimpleImplementor implements Implementor {
     private static final String NEW_LINE = "\n";
     private static final String SPACE = " ";
     private static final String COLON = ";";
-    private String outputDirectory;
+    private final String outputDirectory;
 
     public SimpleImplementor(String outputDirectory) {
         this.outputDirectory = outputDirectory;
@@ -67,7 +37,7 @@ public class SimpleImplementor implements Implementor {
             Class interfaceClazz = getClazz(directoryPath, className);
             work(implClassName, interfaceClazz);
             return implClassName;
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             throw dealWithThrownException(t);
         }
     }
@@ -76,8 +46,13 @@ public class SimpleImplementor implements Implementor {
     public String implementFromStandardLibrary(String className) throws ImplementorException {
         try {
             final String packageName = getPackageName(className);
-            if (!packageName.isEmpty() && (packageName.length() < 6 || !packageName.substring(0, 5).equals("java."))) {
-                throw new IllegalArgumentException("Wrong package for class from standard library: " + packageName);
+            String standardLibraryPackagePrefix = "java.";
+            int prefixLength = standardLibraryPackagePrefix.length();
+            if (!packageName.isEmpty()
+                    && (packageName.length() < prefixLength
+                    || !packageName.substring(0, prefixLength).equals(standardLibraryPackagePrefix))) {
+                String errorMessage = "Wrong package for class from standard library: " + packageName;
+                throw new IllegalArgumentException(errorMessage);
             }
             final String fullClassName = packageName.isEmpty() ? "java.lang." + className : className;
             final Class interfaceClazz = getClazz(fullClassName);
@@ -91,13 +66,14 @@ public class SimpleImplementor implements Implementor {
         }
     }
 
-    private Class getClazz(String directoryPath, String className) throws MalformedURLException, ClassNotFoundException {
-        URL[] URLs = new URL[]{new URL(directoryPath)};
-        ClassLoader classLoader = new URLClassLoader(URLs, getCurrentClassLoader());
+    private Class getClazz(String dir, String className) throws MalformedURLException, ClassNotFoundException {
+        URL[] urls = new URL[]{new URL(dir)};
+        ClassLoader classLoader = new URLClassLoader(urls, getCurrentClassLoader());
         return Class.forName(className, false, classLoader);
     }
 
-    private static @NotNull Class getClazz(String className) throws ClassNotFoundException {
+    @NotNull
+    private static Class getClazz(String className) throws ClassNotFoundException {
         ClassLoader classLoader = getCurrentClassLoader();
         return Class.forName(className, false, classLoader);
     }
@@ -133,7 +109,7 @@ public class SimpleImplementor implements Implementor {
         return lastPointPosition == -1 ? "" : className.substring(0, lastPointPosition);
     }
 
-    private static Writer getImplementationWriter(String outputDirectory, String className) throws ImplementorException {
+    private static Writer getImplWriter(String outputDirectory, String className) throws ImplementorException {
         String packageName = getPackageName(className);
         String packageSubPath = packageName.replace('.', '/');
         try {
@@ -153,12 +129,12 @@ public class SimpleImplementor implements Implementor {
     }
 
     private ImplementorException dealWithThrownException(Throwable t) {
-        return t instanceof ImplementorException ?
-                (ImplementorException) t :
-                new ImplementorException("ImplementorException: ", t);
+        return t instanceof ImplementorException
+                ? (ImplementorException) t
+                : new ImplementorException("ImplementorException: ", t);
     }
 
-    private void writeImports(Writer writer, String className, Class baseClazz) throws IOException {
+    private void writeImports(Writer writer, String className) throws IOException {
         final String currentPackageName = getPackageName(className);
         if (!currentPackageName.isEmpty()) {
             writer.append("package ")
@@ -166,28 +142,6 @@ public class SimpleImplementor implements Implementor {
                     .append(";")
                     .append(NEW_LINE);
         }
-
-        // no need to write imports if we use qualified names all along.
-//        final Set<String> typeSet = Arrays.stream(baseClazz.getMethods())
-//                .filter((m) -> Modifier.isAbstract(m.getModifiers()))
-//                .flatMap((Method m) -> {
-//                    Stream<String> parameterTypesStream = Arrays.stream(m.getGenericParameterTypes())
-//                            .map(Type::getTypeName);
-//                    Stream<String> exceptionTypesStream = Arrays.stream(m.getExceptionTypes())
-//                            .map(Class::getCanonicalName);
-//                    Stream<String> stringStream = Stream.concat(parameterTypesStream,
-//                            Stream.of(m.getReturnType().getCanonicalName()),
-//                            exceptionTypesStream);
-//                    return stringStream;
-//                })
-//                    .filter((clName) -> !Objects.equals(getPackageName(clName), currentPackageName))
-//                    .collect(Collectors.toSet());
-//        for (String t : typeSet) {
-//            writer.append("import ")
-//                    .append(t)
-//                    .append(";")
-//                    .append(NEW_LINE);
-//        }
     }
 
     // TODO variable parameters.
@@ -254,22 +208,24 @@ public class SimpleImplementor implements Implementor {
 
                     // method implementation.
                     writer.append(OPENING_BRACE).append(NEW_LINE);
+
+                    // TODO check for cast warnings.
                     if (!methodReturnType.isPrimitive() || methodReturnType != void.class) {
-                        String returnValueString = null;
+                        String returnValueString;
                         if (!methodReturnType.isPrimitive()) {
                             returnValueString = "null";
-                        } else if (methodReturnType == byte.class ||
-                                methodReturnType == char.class || // TODO check for cast warnings.
-                                methodReturnType == short.class ||
-                                methodReturnType == int.class ||
-                                methodReturnType == long.class) {
+                        } else if (methodReturnType == byte.class
+                                || methodReturnType == char.class
+                                || methodReturnType == short.class
+                                || methodReturnType == int.class
+                                || methodReturnType == long.class) {
                             returnValueString = "0";
                         } else if (methodReturnType == boolean.class) {
                             returnValueString = "false";
                         } else if (methodReturnType == float.class || methodReturnType == double.class) {
                             returnValueString = "0.0";
                         } else {
-                            throw new NotImplementedException();
+                            throw new UnknownError();
                         }
                         writer.append("return ")
                                 .append(returnValueString)
@@ -286,13 +242,13 @@ public class SimpleImplementor implements Implementor {
         if (Modifier.isFinal(baseClazz.getModifiers())) {
             throw new IllegalArgumentException("Unable to instantiate from final class: " + className);
         }
-        Writer writer = getImplementationWriter(outputDirectory, className);
-        writeImports(writer, className, baseClazz);
+        Writer writer = getImplWriter(outputDirectory, className);
+        writeImports(writer, className);
         String simpleName = getSimpleClassName(className);
         assert !baseClazz.isArray();
-        String inheritanceAnnotation = baseClazz.isInterface() ?
-                " implements " + getFullClassName(baseClazz) :
-                " extends " + getFullClassName(baseClazz);
+        String inheritanceAnnotation = baseClazz.isInterface()
+                ? " implements " + getFullClassName(baseClazz)
+                : " extends " + getFullClassName(baseClazz);
 
         writer.append("public class ")
                 .append(simpleName)

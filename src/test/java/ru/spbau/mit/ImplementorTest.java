@@ -79,7 +79,6 @@ public class ImplementorTest {
     public void implementInterfaces() throws Exception {
         checkInterfaceImplementationFromStandardLibrary("java.lang.Cloneable");
         checkInterfaceImplementationFromStandardLibrary("java.util.List");
-        return;
     }
 
     @Test
