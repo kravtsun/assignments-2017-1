@@ -76,8 +76,19 @@ public class ImplementorTest {
     }
 
     @Test
-    public void implementCloneable() throws Exception {
+    public void implementInterfaces() throws Exception {
         checkInterfaceImplementationFromStandardLibrary("java.lang.Cloneable");
+        checkInterfaceImplementationFromStandardLibrary("java.util.List");
+        return;
+    }
+
+    @Test
+    public void extendAbstracts() throws Exception {
+        final String className = "java.lang.Object";
+        Implementor implementor = newImplementor();
+        final String implClassName = implementor.implementFromStandardLibrary(className);
+        Class implClass = compileAndLoadClass(implClassName);
+        assertThat(implClass.getSuperclass().getCanonicalName(), is(className));
     }
 
     private void checkInterfaceImplementationFromFolder(String className) throws Exception {
