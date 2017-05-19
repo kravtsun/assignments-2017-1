@@ -3,6 +3,7 @@ package ru.spbau.mit;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
@@ -33,7 +34,8 @@ public final class Injector {
     private static Object initialize0(String rootClassName, List<String> implementationClassNames)
             throws ImplementationNotFoundException,
             ClassNotFoundException,
-            AmbiguousImplementationException {
+            AmbiguousImplementationException,
+            InjectionCycleException {
         if (alreadyCreatedObjects.containsKey(rootClassName)) {
             return alreadyCreatedObjects.get(rootClassName);
         }
@@ -46,25 +48,31 @@ public final class Injector {
         Constructor rootConstructor = rootClass.getConstructors()[0];
         List<Object> args = new ArrayList<>();
         for (Class<?> dependencyClass : rootConstructor.getParameterTypes()) {
+            Predicate<String> predicate = (implName) -> {
+                try {
+                    Class implementationClass = Class.forName(implName);
+                    return dependencyClass.isAssignableFrom(implementationClass);
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException();
+                }
+            };
             List<String> allowedClasses = implementationClassNames
                     .stream()
-                    .filter((implName) -> {
-                        try {
-                            Class implementationClass = Class.forName(implName);
-                            return dependencyClass.isAssignableFrom(implementationClass);
-                        } catch (ClassNotFoundException e) {
-                            throw new RuntimeException();
-                        }
-                    })
+                    .filter(predicate)
                     .collect(Collectors.toList());
-            if (allowedClasses.size() > 1) {
-                throw new AmbiguousImplementationException();
-            } else if (allowedClasses.isEmpty()) {
-                throw new ImplementationNotFoundException();
-            } else {
+
+            if (allowedClasses.size() == 1) {
                 String allowedClass = allowedClasses.get(0);
                 Object arg = initialize0(allowedClass, implementationClassNames);
                 args.add(arg);
+            } else if (allowedClasses.size() > 1) {
+                throw new AmbiguousImplementationException();
+            } else {
+                if (enqueued.stream().anyMatch(predicate)) {
+                    throw new InjectionCycleException();
+                } else {
+                    throw new ImplementationNotFoundException();
+                }
             }
         }
 
