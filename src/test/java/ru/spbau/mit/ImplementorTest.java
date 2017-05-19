@@ -83,10 +83,11 @@ public class ImplementorTest {
 
     @Test
     public void extendAbstracts() throws Exception {
-//        checkAbstractClassImplementationFromStandardLibrary("java.lang.Object");
+        checkAbstractClassImplementationFromStandardLibrary("java.lang.Object");
         String classWithAbstractProtectedMethods = "java.awt.KeyboardFocusManager";
         checkAbstractClassImplementationFromStandardLibrary(classWithAbstractProtectedMethods);
-        // Failed to make it work.
+        // Failed to make it work, is there is now way to transfer current runtime knowledge (loaded abstract class)
+        // into implementation compilation?
 //        String className = "AbstractProtectedBase";
 //        Path classPath = Paths.get(getTestsDirectoryPath(), className + ".java");
 //        Writer writer = Files.newBufferedWriter(classPath, StandardOpenOption.CREATE_NEW);

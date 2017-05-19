@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -116,7 +117,8 @@ public class SimpleImplementor implements Implementor {
         return lastPointPosition == -1 ? "" : className.substring(0, lastPointPosition);
     }
 
-    private static Writer getImplWriter(String outputDirectory, String className) throws ImplementorException {
+    private static Writer initImplementationWriter(String outputDirectory, String className)
+            throws ImplementorException {
         String packageName = getPackageName(className);
         String packageSubPath = packageName.replace('.', '/');
         try {
@@ -210,8 +212,7 @@ public class SimpleImplementor implements Implementor {
         sb.append(OPENING_PARENTHESIS)
                 .append(parametersString(method.getParameters()))
                 .append(CLOSING_PARENTHESIS)
-                .append(SPACE)
-                .append(thrownExceptionsString(method.getExceptionTypes()));
+                .append(SPACE);
         return sb.toString();
     }
 
@@ -258,7 +259,7 @@ public class SimpleImplementor implements Implementor {
         } else if (Modifier.isProtected(mods)) {
             return "protected";
         } else {
-            throw new IllegalArgumentException("package-private methods are assumed to be absent.");
+            throw new IllegalArgumentException("package-private or private methods are assumed to be absent.");
         }
     }
 
@@ -267,18 +268,25 @@ public class SimpleImplementor implements Implementor {
             return Stream.empty();
         }
 
-        Stream<Method> publicMethodsStream = Arrays.stream(clazz.getMethods());
-        Stream<Method> ownedMethodsStream = Arrays.stream(clazz.getDeclaredMethods());
-        Stream<Method> parentMethodsStream = getMethodsStream(clazz.getSuperclass());
-        return Stream.concat(Stream.concat(publicMethodsStream, ownedMethodsStream), parentMethodsStream)
+        return Stream.concat(Stream.concat(Stream.concat(Arrays.stream(clazz.getMethods()), // publicMethodsStream.
+                Arrays.stream(clazz.getDeclaredMethods())), // ownedMethodsStream.
+                getMethodsStream(clazz.getSuperclass())), // parentMethodsStream.
+                Arrays.stream(clazz.getInterfaces())
+                        .flatMap(SimpleImplementor::getMethodsStream)) // interfacesMethodsStream
                 .filter((m) -> Modifier.isAbstract(m.getModifiers()))
                 .distinct();
     }
 
     private static void writeMethods(Writer writer, Class baseClazz) throws IOException {
         String allMethodString = getMethodsStream(baseClazz)
-                .map((m) -> methodSignatureString(m) + methodBodyString(m))
-                .distinct()
+                .collect(Collectors.toMap(SimpleImplementor::methodSignatureString,
+                        Function.identity(),
+                        (m1, m2) -> m1))
+                .entrySet()
+                .stream()
+                .map((e) -> e.getKey()
+                        + thrownExceptionsString(e.getValue().getExceptionTypes())
+                        + methodBodyString(e.getValue()))
                 .collect(Collectors.joining(NEW_LINE));
         writer.append(allMethodString);
     }
@@ -287,32 +295,33 @@ public class SimpleImplementor implements Implementor {
         if (Modifier.isFinal(baseClazz.getModifiers())) {
             throw new IllegalArgumentException("Unable to instantiate from final class: " + className);
         }
-        Writer writer = getImplWriter(outputDirectory, className);
-        writeImports(writer, className);
-        String simpleName = getSimpleClassName(className);
-        assert !baseClazz.isArray();
-        String inheritanceAnnotation = baseClazz.isInterface()
-                ? " implements " + getFullClassName(baseClazz)
-                : " extends " + getFullClassName(baseClazz);
 
-        writer.append("public class ")
-                .append(simpleName)
-                .append(inheritanceAnnotation)
-                .append(SPACE)
-                .append(OPENING_BRACE)
-                .append(NEW_LINE);
+        try (Writer writer = initImplementationWriter(outputDirectory, className)) {
+            writeImports(writer, className);
+            String simpleName = getSimpleClassName(className);
+            assert !baseClazz.isArray();
+            String inheritanceAnnotation = baseClazz.isInterface()
+                    ? " implements " + getFullClassName(baseClazz)
+                    : " extends " + getFullClassName(baseClazz);
 
-        writeConstructors(writer, baseClazz, className);
-        writeMethods(writer, baseClazz);
+            writer.append("public class ")
+                    .append(simpleName)
+                    .append(inheritanceAnnotation)
+                    .append(SPACE)
+                    .append(OPENING_BRACE)
+                    .append(NEW_LINE);
 
-        // * imports
-        // * implementation class declaration
-        // * constructors redirecting to super, if baseClazz is abstract (not interface) -
-        // cannot declare a constructor abstract class!!
-        // * methods.
+            writeConstructors(writer, baseClazz, className);
+            writeMethods(writer, baseClazz);
 
-        writer.append(CLOSING_BRACE + NEW_LINE);
-        writer.append(NEW_LINE);
-        writer.close();
+            // * imports
+            // * implementation class declaration
+            // * constructors redirecting to super, if baseClazz is abstract (not interface) -
+            // cannot declare a constructor abstract class!!
+            // * methods.
+
+            writer.append(CLOSING_BRACE + NEW_LINE);
+            writer.append(NEW_LINE);
+        }
     }
 }
