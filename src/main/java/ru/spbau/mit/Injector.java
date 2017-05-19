@@ -9,10 +9,7 @@ import java.util.stream.Collectors;
 public final class Injector {
     private static Map<String, Object> alreadyCreatedObjects;
     private static Set<String> enqueued;
-//    private static Map<String, Constructor> usedConstructors;
-//    private static Set<Injector> initialized;
 
-//    private static Set<Object> alreadyCreatedObjects;
     private Injector() {
     }
 
@@ -58,7 +55,7 @@ public final class Injector {
         Class rootClass = Class.forName(rootClassName);
         Constructor rootConstructor = rootClass.getConstructors()[0];
         List<Object> args = new ArrayList<>();
-        for (Class dependencyClass : rootConstructor.getParameterTypes()) {
+        for (Class<?> dependencyClass : rootConstructor.getParameterTypes()) {
             List<String> allowedClasses = implementationClassNames
                     .stream()
                     .filter((implName) -> {
