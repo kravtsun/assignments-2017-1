@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 
 public final class Injector {
-    private static Map<String, Object> alreadyCreatedObjects;
-    private static Set<String> enqueued;
+    private static Map<String, Object> alreadyCreatedObjects = new HashMap<>();
+    private static Set<String> enqueued = new HashSet<>();
 
     private Injector() {
     }
@@ -18,20 +18,11 @@ public final class Injector {
      * `implementationClassNames` for concrete dependencies.
      */
     public static Object initialize(String rootClassName, List<String> implementationClassNames) throws Exception {
-        initializeStructures();
-        Object object = initialize0(rootClassName, implementationClassNames);
-        deinitializeStructures();
-        return object;
-    }
-
-    private static void initializeStructures() {
-        if (Objects.isNull(alreadyCreatedObjects)) {
-            assert Objects.isNull(enqueued);
-            alreadyCreatedObjects = new HashMap<>();
-            enqueued = new HashSet<>();
+        try {
+            return initialize0(rootClassName, implementationClassNames);
         }
-        if (!alreadyCreatedObjects.isEmpty() || !enqueued.isEmpty()) {
-            throw new RuntimeException();
+        finally {
+            deinitializeStructures();
         }
     }
 
