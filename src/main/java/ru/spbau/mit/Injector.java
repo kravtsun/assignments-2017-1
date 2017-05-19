@@ -20,8 +20,7 @@ public final class Injector {
     public static Object initialize(String rootClassName, List<String> implementationClassNames) throws Exception {
         try {
             return initialize0(rootClassName, implementationClassNames);
-        }
-        finally {
+        } finally {
             deinitializeStructures();
         }
     }
