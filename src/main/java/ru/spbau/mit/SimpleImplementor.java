@@ -2,7 +2,6 @@ package ru.spbau.mit;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.reflect.*;
 import java.net.MalformedURLException;
@@ -14,7 +13,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -197,12 +195,31 @@ public class SimpleImplementor implements Implementor {
                     .append(NEW_LINE);
             writer.append(CLOSING_BRACE).append(NEW_LINE);
         }
-
     }
 
-    private static void writeMethodBody(Writer writer, Class methodReturnType) throws IOException {
+    private static String methodSignatureString(Method method) {
+        StringBuilder sb = new StringBuilder();
+        Class methodReturnType = method.getReturnType();
+        sb.append(overridenMethodModifer(method))
+                .append(SPACE)
+                .append(getFullClassName(methodReturnType))
+                .append(SPACE)
+                .append(method.getName());
+
+        // signature without modifiers and name.
+        sb.append(OPENING_PARENTHESIS)
+                .append(parametersString(method.getParameters()))
+                .append(CLOSING_PARENTHESIS)
+                .append(SPACE)
+                .append(thrownExceptionsString(method.getExceptionTypes()));
+        return sb.toString();
+    }
+
+    private static String methodBodyString(Method method) {
+        Class methodReturnType = method.getReturnType();
+        StringBuilder sb = new StringBuilder();
         // method implementation.
-        writer.append(OPENING_BRACE).append(NEW_LINE);
+        sb.append(OPENING_BRACE).append(NEW_LINE);
 
         // TODO check for cast warnings.
         if (!methodReturnType.isPrimitive() || methodReturnType != void.class) {
@@ -225,12 +242,13 @@ public class SimpleImplementor implements Implementor {
             } else {
                 throw new UnknownError();
             }
-            writer.append("return ")
+            sb.append("return ")
                     .append(returnValueString)
                     .append(COLON)
                     .append(NEW_LINE);
         }
-        writer.append(CLOSING_BRACE).append(NEW_LINE);
+        sb.append(CLOSING_BRACE).append(NEW_LINE);
+        return sb.toString();
     }
 
     private static String overridenMethodModifer(Method method) {
@@ -258,28 +276,11 @@ public class SimpleImplementor implements Implementor {
     }
 
     private static void writeMethods(Writer writer, Class baseClazz) throws IOException {
-//        if ((baseClazz.getModifiers() & Modifier.ABSTRACT) != 0) {
-        Consumer<Method> methodWork = method -> {
-            Class methodReturnType = method.getReturnType();
-            try {
-                writer.append(overridenMethodModifer(method))
-                        .append(SPACE)
-                        .append(getFullClassName(methodReturnType))
-                        .append(SPACE)
-                        .append(method.getName());
-
-                // signature without modifiers and name.
-                writer.append(OPENING_PARENTHESIS)
-                        .append(parametersString(method.getParameters()))
-                        .append(CLOSING_PARENTHESIS)
-                        .append(SPACE)
-                        .append(thrownExceptionsString(method.getExceptionTypes()));
-                writeMethodBody(writer, method.getReturnType());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        };
-        getMethodsStream(baseClazz).distinct().forEach(methodWork);
+        String allMethodString = getMethodsStream(baseClazz)
+                .map((m) -> methodSignatureString(m) + methodBodyString(m))
+                .distinct()
+                .collect(Collectors.joining(NEW_LINE));
+        writer.append(allMethodString);
     }
 
     private void work(String className, Class baseClazz) throws IOException, ImplementorException {
